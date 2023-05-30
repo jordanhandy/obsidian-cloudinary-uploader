@@ -2632,7 +2632,7 @@ var import_obsidian2 = __toModule(require("obsidian"));
 var import_axios = __toModule(require_axios2());
 var import_object_path = __toModule(require_object_path());
 
-// src/settings-tab.ts
+// src/settings.ts
 var import_obsidian = __toModule(require("obsidian"));
 var CloudinaryUploaderSettingTab = class extends import_obsidian.PluginSettingTab {
   constructor(app, plugin) {

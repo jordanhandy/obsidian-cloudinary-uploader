@@ -10,29 +10,19 @@ import axios from "axios"
 import objectPath from 'object-path'
 
 // Settings tab import
-import CloudinaryUploaderSettingTab from './settings-tab'
+import CloudinaryUploaderSettingTab, {UploadFolder} from './Settings/settings'
+import { CloudinarySettings, DEFAULT_SETTINGS } from "./Settings/settings";
 
-//Define Cloudinary Settings
-interface CloudinarySettings {
-  cloudName: string;
-  uploadPreset: string;
-  folder: string;
-  f_auto: boolean;
-  transformParams: string;
-  //maxWidth: number; TODO
-  // enableResize: boolean; TODO
-}
+// export interface CloudinarySettings {
+//   cloudName: string | null,
+//   uploadBasedOnFolderTrigger: boolean,
+//   uploadFolders: Array<UploadFolder>,
+//   globalUploadFolder: string | null,
+//   globalUploadPreset: string | null,
+//   formatAutoTrigger: false,
+//   transformParams: string | null,
+// }
 
-// Set settings defaults
-const DEFAULT_SETTINGS: CloudinarySettings = {
-  cloudName: null,
-  uploadPreset: null,
-  folder: null,
-  f_auto: false,
-  transformParams: null,
-  //maxWidth: 4096, TODO
-  //enableResize: false, TODO later
-};
 export default class CloudinaryUploader extends Plugin {
   settings: CloudinarySettings;
 
@@ -44,9 +34,9 @@ export default class CloudinaryUploader extends Plugin {
     this.registerEvent(this.app.workspace.on('editor-paste',async (evt: ClipboardEvent, editor: Editor)=>{
       const { files } = evt.clipboardData;
       if(files.length > 0){
-       if (this.settings.cloudName && this.settings.uploadPreset && files[0].type.startsWith("image")) {
+       if (this.settings.cloudName && this.settings.globalUploadPreset && files[0].type.startsWith("image")) {
         evt.preventDefault(); // Prevent default paste behaviour
-        for (let file of files) {
+        for (const file of files) {
           const randomString = (Math.random() * 10086).toString(36).substr(0, 8)
           const pastePlaceText = `![uploading...](${randomString})\n`
           editor.replaceSelection(pastePlaceText) // Generate random string to show on editor screen while API call completes
@@ -56,8 +46,8 @@ export default class CloudinaryUploader extends Plugin {
           // Optionally define a folder
           const formData = new FormData();
           formData.append('file',file);
-          formData.append('upload_preset',this.settings.uploadPreset);
-          formData.append('folder',this.settings.folder);
+          formData.append('upload_preset',this.settings.globalUploadPreset);
+          formData.append('folder',this.settings.globalUploadFolder);
 
           // Make API call
           axios({
@@ -78,7 +68,7 @@ export default class CloudinaryUploader extends Plugin {
               imgMarkdownText = `![](${modifiedURL})`;
               url = modifiedURL
             }
-            if(this.settings.f_auto){
+            if(this.settings.formatAutoTrigger){
               const splitURL = url.split("/upload/",2);
               let modifiedURL='';
               modifiedURL = splitURL[0]+="/upload/f_auto/"+splitURL[1];
@@ -108,7 +98,7 @@ export default class CloudinaryUploader extends Plugin {
   // Function to replace text
   private replaceText(editor: Editor, target: string, replacement: string): void {
     target = target.trim();
-    let lines = [];
+    const lines = [];
     for (let i = 0; i < editor.lineCount(); i++){
       lines.push(editor.getLine(i));
     }
