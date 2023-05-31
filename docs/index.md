@@ -2,19 +2,20 @@
 label: Getting Started
 layout: default
 order: 1000
-author: Jordan Handy
+author: Uday Samsani
 icon: gear
 ---
-## Initial Installation
+## Getting Started
 To get started with this plugin, do either of the following:
 - From Github
     - Clone the repo
     - Run `npm run build`
-    - Enable the plugin in your Obidian instance
-- From the Obsidian Plugins Tab:
+    - Enable the plugin in your Obsidian Vault under `Settings > Community Plugins > Installed Plugins`
+- From the Obsidian Community Plugins
     - Disable Obsidian safe mode
-    - Search for "Obsidian Cloudinary Uploader" and install
+    - Go to `Settings > Community Plugins > Browse`
+    - Search for "Cloudinary" and install
 
-![Action GIF](https://res.cloudinary.com/dakfccuv5/image/upload/v1636859613/Nov-13-2021_22-11-40_bpei0d.gif)
+![Action GIF](assets/cloudinary.gif)
 
 Move to [Configuring the Plugin](configuring-the-plugin.md)

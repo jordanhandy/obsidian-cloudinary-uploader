@@ -13,10 +13,58 @@ import objectPath from 'object-path'
 import CloudinaryUploaderSettingTab from './Settings/settings'
 import {CloudinarySettings, DEFAULT_SETTINGS} from "./Settings/settings";
 
-
 export default class CloudinaryUploader extends Plugin {
     settings: CloudinarySettings;
     private workspace = this.app.workspace;
+    private statusBar: HTMLElement;
+    private placeholder: string;
+    private isUploading = false;
+
+    private validate = () => {
+        if(this.settings.cloudName===""){
+            new Notice("☁️ Cloudinary: Cloud Empty ⚠️\nKindly fill cloudinary name & try again", 5000)
+            this.isUploading = false;
+            this.statusBar.setText("☁️ Cloudinary: Cloud Name Empty ⚠️")
+            setTimeout(() => {
+                this.statusBar.setText("")
+            }, 10000);
+            return false;
+        }
+        if (this.settings.globalUploadPreset===""){
+            new Notice("☁️ Cloudinary: Global Upload preset Empty ⚠️\nKindly fill upload preset & try again", 5000)
+            this.isUploading = false;
+            this.statusBar.setText("☁️ Cloudinary: Global Upload Preset Empty ⚠️")
+            setTimeout(() => {
+                this.statusBar.setText("")
+            }, 10000);
+            return false;
+        }
+        return true;
+    }
+
+    private handleUploadingStatusBar = () => {
+        this.isUploading = true;
+        let counter = 0;
+        const intervalId = setInterval(() => {
+            if (this.isUploading) {
+                counter = (counter + 1) % 4;
+                const square = ['⠙', '⠹', '⠸', '⠼'][counter];
+                this.statusBar.setText("☁️ Cloudinary: Uploading... " + `${square}`)
+            }
+        }, 200)
+        if (!this.isUploading) {
+            clearInterval(intervalId)
+        }
+        this.statusBar.setText("")
+    }
+
+    private handleUploadSuccess = () => {
+        this.isUploading = false;
+        this.statusBar.setText("☁️ Cloudinary: Uploaded ✅")
+        setTimeout(() => {
+            this.statusBar.setText("")
+        }, 3000)
+    }
 
     //
     private getUploadPresetAndFolder = (file): { uploadFolder: string, uploadPreset: string } => {
@@ -28,7 +76,7 @@ export default class CloudinaryUploader extends Plugin {
                 break;
             }
         }
-        if (this.settings.segregateContentSeparately){
+        if (this.settings.segregateContentSeparately) {
             if (file.type.startsWith("image")) {
                 result.uploadFolder += "/images"
             } else if (file.type.startsWith("video")) {
@@ -42,20 +90,27 @@ export default class CloudinaryUploader extends Plugin {
 
     // upload files to cloudinary
     private uploadFiles = async (files: FileList, event, editor) => {
-        try {
-            if (files.length > 0) {
-                if (
-                    this.settings.cloudName &&
-                    Array(...files).filter(file => this.settings.content.contains(file.type.split("/")[0])).length > 0
-                ) {
-                    for (const file of files) {
+        if(!this.validate()){
+            return;
+        }
+        if (files.length > 0) {
+            if (
+                this.settings.cloudName &&
+                Array(...files).filter(file => this.settings.content.contains(file.type.split("/")[0])).length > 0
+            ) {
+                for (const file of files) {
+                    try {
                         if (this.settings.content.contains(file.type.split("/")[0])) {
                             // Prevent default paste behaviour
                             event.preventDefault();
+
+                            // Loading Status
                             const randomString = (Math.random() * 10086).toString(36).substr(0, 8)
                             const pastePlaceText = `![uploading...](${randomString})\n`
                             // Generate random string to show on editor screen while API call completes
                             editor.replaceSelection(pastePlaceText)
+                            this.placeholder = pastePlaceText
+                            this.handleUploadingStatusBar()
 
 
                             const {uploadPreset, uploadFolder} = this.getUploadPresetAndFolder(file);
@@ -91,26 +146,43 @@ export default class CloudinaryUploader extends Plugin {
                                 url = splitURL[0] += "/upload/f_auto/" + splitURL[1];
                             }
 
+                            this.handleUploadSuccess()
                             if (file.type.startsWith("image")) {
                                 const imgMarkdownText = `![${file.name}](${url})\n`
-                                this.replaceText(editor, pastePlaceText, imgMarkdownText);
+                                this.replaceText(editor, imgMarkdownText);
                             } else if (file.type.startsWith("video")) {
                                 const videoMarkdownText = `<video controls src="${url}"></video>\n`
-                                this.replaceText(editor, pastePlaceText, videoMarkdownText);
+                                this.replaceText(editor, videoMarkdownText);
                             } else if (file.type.startsWith("audio")) {
                                 const audioMarkdownText = `<audio controls src="${url}"></audio>\n`
-                                this.replaceText(editor, pastePlaceText, audioMarkdownText);
+                                this.replaceText(editor, audioMarkdownText);
                             }
                         } else {
                             const fileRef = `![${file.name}](${file.name})\n`
                             editor.replaceSelection(fileRef)
                         }
+                    } catch (err) {
+                        if (err.response.status === 401) {
+                            new Notice("☁️ Cloudinary: Cloud not found ⛔\nKindly check cloudinary name & try again", 5000)
+                            this.isUploading = false;
+                            this.statusBar.setText("☁️ Cloudinary: Cloud Name Not Found ⛔️")
+                        } else if (err.response.status === 400) {
+                            new Notice("☁️ Cloudinary: Upload Preset Not Found ⛔️\nKindly check upload preset & try again", 5000)
+                            this.isUploading = false;
+                            this.statusBar.setText("☁️ Cloudinary: Cloud Preset Not Found ⛔️")
+                        } else {
+                            new Notice("☁️ Cloudinary: Upload Failed ⛔️\nKindly check settings & try again", 5000)
+                            this.isUploading = false;
+                            this.statusBar.setText("☁️ Cloudinary: Upload Failed ❌")
+                        }
+                        setTimeout(() => {
+                            this.statusBar.setText("")
+                        }, 5000)
+                        this.replaceText(this.workspace.activeEditor.editor, `![${file.name}](${file.name})\n`)
                     }
                 }
             }
-        } catch (err) {
-            new Notice(err, 5000)
-            console.log(err)
+
         }
     }
 
@@ -132,77 +204,9 @@ export default class CloudinaryUploader extends Plugin {
         this.registerEvent(this.app.workspace.on('editor-drop', this.customDropHandler))
     }
 
-    // setupPasteHandler(): void {
-    // // On paste event, get "files" from clipbaord data
-    // // If files contain image, move to API call
-    // // if Files empty or does not contain image, throw error
-    //   this.registerEvent(this.app.workspace.on('editor-paste',async (evt: ClipboardEvent, editor: Editor)=>{
-    //     const { files } = evt.clipboardData;
-    //     if(files.length > 0){
-    //      if (this.settings.cloudName && this.settings.globalUploadPreset && files[0].type.startsWith("image")) {
-    //       evt.preventDefault(); // Prevent default paste behaviour
-    //       for (const file of files) {
-    //         const randomString = (Math.random() * 10086).toString(36).substr(0, 8)
-    //         const pastePlaceText = `![uploading...](${randomString})\n`
-    //         editor.replaceSelection(pastePlaceText) // Generate random string to show on editor screen while API call completes
-    //
-    //         // Cloudinary request format
-    //         // Send form data with a file and upload preset
-    //         // Optionally define a folder
-    //         const formData = new FormData();
-    //         formData.append('file',file);
-    //         formData.append('upload_preset',this.settings.globalUploadPreset);
-    //         formData.append('folder',this.settings.globalUploadFolder);
-    //
-    //         // Make API call
-    //         axios({
-    //           url: `https://api.cloudinary.com/v1_1/${this.settings.cloudName}/auto/upload`,
-    //           method: 'POST',
-    //           data: formData
-    //         }).then(res => {
-    //         // Get response public URL of uploaded image
-    //         console.log(res);
-    //           let url = objectPath.get(res.data, 'secure_url')
-    //           let imgMarkdownText ="";
-    //
-    //           // Split URL to allow for appending transformations
-    //           if(this.settings.transformParams){
-    //             const splitURL = url.split("/upload/",2);
-    //             let modifiedURL='';
-    //             modifiedURL = splitURL[0]+="/upload/"+this.settings.transformParams+"/"+splitURL[1];
-    //             imgMarkdownText = `![](${modifiedURL})`;
-    //             url = modifiedURL
-    //           }
-    //           if(this.settings.formatAutoTrigger){
-    //             const splitURL = url.split("/upload/",2);
-    //             let modifiedURL='';
-    //             modifiedURL = splitURL[0]+="/upload/f_auto/"+splitURL[1];
-    //             imgMarkdownText = `![](${modifiedURL})`;
-    //
-    //           // leave stamdard of no transformations added
-    //           }else{
-    //           imgMarkdownText = `![](${url})`;
-    //           }
-    //           // Show MD syntax using uploaded image URL, in Obsidian Editor
-    //           this.replaceText(editor, pastePlaceText, imgMarkdownText)
-    //         }, err => {
-    //         // Fail otherwise
-    //           new Notice(err, 5000)
-    //           console.log(err)
-    //         })
-    //       }
-    //     }
-    //     // else {
-    //     // // If not image data, or empty files array
-    //     //   new Notice("Cloudinary Image Uploader: Please check the image hosting settings.");
-    //     //   editor.replaceSelection("Please check settings for upload\n This will also appear if file is not of image type");
-    //     // }
-    //
-    //   }}))
-    // }
-    // Function to replace text
-    private replaceText(editor: Editor, target: string, replacement: string): void {
-        target = target.trim();
+
+    private replaceText(editor: Editor, replacement: string): void {
+        const target = this.placeholder.trim();
         const lines = [];
         for (let i = 0; i < editor.lineCount(); i++) {
             lines.push(editor.getLine(i));
@@ -221,18 +225,17 @@ export default class CloudinaryUploader extends Plugin {
 
     // Plugin load steps
     async onload(): Promise<void> {
-        console.log("loading Cloudinary Uploader");
+        new Notice("Cloudinary plugin is loaded", 5000)
         await this.loadSettings();
         // this.setupPasteHandler();
         this.setupHandlers();
-
         this.addSettingTab(new CloudinaryUploaderSettingTab(this.app, this));
+        this.statusBar = this.addStatusBarItem();
     }
 
     // Plugin shutdown steps
     onunload(): void {
-        console.log("unloading Cloudinary Uploader");
-
+        new Notice("Cloudinary plugin is unloaded", 5000)
     }
 
     // Load settings infromation

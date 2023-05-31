@@ -2,7 +2,7 @@
  * @Author: Jordan Handy
  */
 import {
-    App, ButtonComponent,
+    App, ButtonComponent, Notice,
     PluginSettingTab,
     Setting,
 } from 'obsidian';
@@ -66,10 +66,10 @@ export default class CloudinaryUploaderSettingTab extends PluginSettingTab {
         this.toggleUploadBasedOnFolder();
         if (this.plugin.settings.uploadBasedOnFolderTrigger) {
             this.addUploadBasedOnFolder()
-        } else {
-            this.addGlobalUploadFolder();
-            this.addGlobalUploadPreset();
         }
+        this.addGlobalUploadFolder();
+        this.addGlobalUploadPreset();
+
         this.segregateContentSeparately();
         containerEl.createEl("br")
 
@@ -228,11 +228,7 @@ export default class CloudinaryUploaderSettingTab extends PluginSettingTab {
                                         (e) => e.obsidianFolder == newFolder
                                     )
                                 ) {
-                                    // log_error(
-                                    //     new TemplaterError(
-                                    //         "This folder already has a template associated with it"
-                                    //     )
-                                    // );
+                                    new Notice("Folder already exists", 3000);
                                     return;
                                 }
 
@@ -311,7 +307,7 @@ export default class CloudinaryUploaderSettingTab extends PluginSettingTab {
     addGlobalUploadFolder(): void {
         const desc = document.createDocumentFragment();
         desc.append(
-            "Every upload in vault will go into this cloudinary folder. ",
+            "Every upload which does not go under the folder specific config in vault use this cloudinary folder. ",
         );
 
         new Setting(this.containerEl)
@@ -331,7 +327,7 @@ export default class CloudinaryUploaderSettingTab extends PluginSettingTab {
     addGlobalUploadPreset(): void {
         const desc = document.createDocumentFragment();
         desc.append(
-            "Every upload in vault use this upload preset. ",
+            "Every upload which does not go under the folder specific config in vault use this upload preset. ",
         );
 
         new Setting(this.containerEl)
@@ -355,7 +351,7 @@ export default class CloudinaryUploaderSettingTab extends PluginSettingTab {
         );
 
         new Setting(this.containerEl)
-            .setName("Segregate Image and Video")
+            .setName("Segregate Content Separately")
             .setDesc(desc)
             .addToggle((toggle) =>
                 toggle

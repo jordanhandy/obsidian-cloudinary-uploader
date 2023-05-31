@@ -10,6 +10,7 @@ export class FolderSuggest extends TextInputSuggest<TFolder> {
         const lowerCaseInputStr = inputStr.toLowerCase();
 
         abstractFiles.forEach((folder: TAbstractFile) => {
+            console.log(folder);
             if (
                 folder instanceof TFolder &&
                 folder.path.toLowerCase().contains(lowerCaseInputStr)
