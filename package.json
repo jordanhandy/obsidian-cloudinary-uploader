@@ -1,7 +1,7 @@
 {
   "name": "obsidian-cloudinary",
-  "version": "0.1.0",
-  "description": "This plugin allows you to upload images to Cloudinary and insert them into your notes.",
+  "version": "1.1.0",
+  "description": "This plugin allows you to upload content(images, videos, audio) to Cloudinary and insert(copy or drag both) them into your notes.",
   "main": "lib/main.js",
   "license": "MIT",
   "scripts": {
