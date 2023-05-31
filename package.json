@@ -1,7 +1,7 @@
 {
-  "name": "obsidian-cloudinary-uploader",
-  "version": "0.1.5",
-  "description": "This plugin uploads the images in your clipboard to Cloudinary as unsigned uploads",
+  "name": "obsidian-cloudinary",
+  "version": "0.1.0",
+  "description": "This plugin allows you to upload images to Cloudinary and insert them into your notes.",
   "main": "lib/main.js",
   "license": "MIT",
   "scripts": {

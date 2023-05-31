@@ -21,24 +21,30 @@ export interface UploadFolder {
 
 export const DEFAULT_SETTINGS: CloudinarySettings = {
     cloudName: null,
+    content: ["image"],
     uploadBasedOnFolderTrigger: false,
     uploadFolders: [{obsidianFolder: "", uploadPreset: "", uploadFolder: ""}],
     globalUploadFolder: null,
     globalUploadPreset: null,
-    showSidebarIcon: true,
-    formatAutoTrigger: false,
-    transformParams: "",
+    segregateContentSeparately: true,
+    formatAuto: true,
+    imageTransformParams: "",
+    videoTransformParams: "",
+    audioTransformParams: "",
 };
 
 export interface CloudinarySettings {
     cloudName: string | null,
+    content: Array<string>,
     uploadBasedOnFolderTrigger: boolean,
     uploadFolders: Array<UploadFolder>,
     globalUploadFolder: string | null,
     globalUploadPreset: string | null,
-    showSidebarIcon: boolean,
-    formatAutoTrigger: false,
-    transformParams: string | null,
+    segregateContentSeparately: boolean,
+    formatAuto: boolean,
+    imageTransformParams: string | null,
+    videoTransformParams: string | null,
+    audioTransformParams: string | null,
 }
 
 export default class CloudinaryUploaderSettingTab extends PluginSettingTab {
@@ -56,6 +62,7 @@ export default class CloudinaryUploaderSettingTab extends PluginSettingTab {
         containerEl.createEl("div")
         containerEl.createEl("h2", {text: "General Settings"});
         this.addCloudinaryName();
+        this.addUploadContent();
         this.toggleUploadBasedOnFolder();
         if (this.plugin.settings.uploadBasedOnFolderTrigger) {
             this.addUploadBasedOnFolder()
@@ -63,13 +70,16 @@ export default class CloudinaryUploaderSettingTab extends PluginSettingTab {
             this.addGlobalUploadFolder();
             this.addGlobalUploadPreset();
         }
-        this.toggleSidebarIcon();
+        this.segregateContentSeparately();
         containerEl.createEl("br")
 
         containerEl.createEl("div")
         containerEl.createEl("h2", {text: "Transformation Settings"});
         this.toggleFormatAuto();
-        this.addTransformPath();
+        this.transformationParamsHeaders();
+        this.addImageTransformParams();
+        this.addVideoTransformParams();
+        this.addAudioTransformParams();
         containerEl.createEl("br")
 
 
@@ -100,6 +110,58 @@ export default class CloudinaryUploaderSettingTab extends PluginSettingTab {
                         await this.plugin.saveSettings();
                     })
             );
+    }
+
+    addUploadContent(): void {
+        new Setting(this.containerEl).setName("Upload Content");
+        new Setting(this.containerEl)
+            .setDesc("Images")
+            .addToggle((toggle) => {
+                    toggle.setTooltip("Images")
+                    toggle
+                        .setValue(this.plugin.settings.content.includes("image"))
+                        .onChange(async (value) => {
+                            if (value) {
+                                this.plugin.settings.content.push("image");
+                            } else {
+                                this.plugin.settings.content = this.plugin.settings.content.filter(item => item !== "image");
+                            }
+                            await this.plugin.saveSettings();
+                        })
+                }
+            )
+        new Setting(this.containerEl)
+            .setDesc("Videos")
+            .addToggle((toggle) => {
+                    toggle.setTooltip("Videos")
+                    toggle
+                        .setValue(this.plugin.settings.content.includes("video"))
+                        .onChange(async (value) => {
+                            if (value) {
+                                this.plugin.settings.content.push("video");
+                            } else {
+                                this.plugin.settings.content = this.plugin.settings.content.filter(item => item !== "video");
+                            }
+                            await this.plugin.saveSettings();
+                        })
+                }
+            )
+        new Setting(this.containerEl)
+            .setDesc("Audio")
+            .addToggle((toggle) => {
+                    toggle.setTooltip("Audio")
+                    toggle
+                        .setValue(this.plugin.settings.content.includes("audio"))
+                        .onChange(async (value) => {
+                            if (value) {
+                                this.plugin.settings.content.push("audio");
+                            } else {
+                                this.plugin.settings.content = this.plugin.settings.content.filter(item => item !== "audio");
+                            }
+                            await this.plugin.saveSettings();
+                        })
+                }
+            )
     }
 
     toggleUploadBasedOnFolder(): void {
@@ -286,20 +348,20 @@ export default class CloudinaryUploaderSettingTab extends PluginSettingTab {
             );
     }
 
-    toggleSidebarIcon(): void {
+    segregateContentSeparately(): void {
         const desc = document.createDocumentFragment();
         desc.append(
-            "Show cloudinary icon in sidebar.",
+            "Segregate content in respective child folders.",
         );
 
         new Setting(this.containerEl)
-            .setName("Show Sidebar Icon")
+            .setName("Segregate Image and Video")
             .setDesc(desc)
             .addToggle((toggle) =>
                 toggle
-                    .setValue(this.plugin.settings.showSidebarIcon)
+                    .setValue(this.plugin.settings.segregateContentSeparately)
                     .onChange(async (value) => {
-                        this.plugin.settings.showSidebarIcon = value;
+                        this.plugin.settings.segregateContentSeparately = value;
                         await this.plugin.saveSettings();
                     })
             );
@@ -317,17 +379,17 @@ export default class CloudinaryUploaderSettingTab extends PluginSettingTab {
         new Setting(this.containerEl)
             .setName("Format Auto")
             .setDesc(desc)
-            .addToggle((toggle) =>
-                toggle
-                    .setValue(this.plugin.settings.formatAutoTrigger)
-                    .onChange(async (value) => {
-                        this.plugin.settings.uploadBasedOnFolderTrigger = value;
-                        await this.plugin.saveSettings();
-                    })
+            .addToggle((toggle) => {
+                    toggle.setValue(this.plugin.settings.formatAuto)
+                        .onChange(async (value) => {
+                            this.plugin.settings.formatAuto = value;
+                            await this.plugin.saveSettings();
+                        })
+                }
             );
     }
 
-    addTransformPath(): void {
+    transformationParamsHeaders(): void {
         const desc = document.createDocumentFragment();
         desc.append(
             "Upload transformations params in comma separated format.",
@@ -339,16 +401,46 @@ export default class CloudinaryUploaderSettingTab extends PluginSettingTab {
             }),
             " reference by Cloudinary for more information.",
         );
+        new Setting(this.containerEl).setName("Transformations Parameters").setDesc(desc);
+    }
 
+    addImageTransformParams(): void {
         new Setting(this.containerEl)
-            .setName("Transformation Params")
-            .setDesc(desc)
+            .setName("Image")
             .addText((text) =>
                 text
                     .setPlaceholder("w_100,h_100,c_fill")
-                    .setValue(this.plugin.settings.cloudName)
+                    .setValue(this.plugin.settings.imageTransformParams)
                     .onChange(async (value) => {
-                        this.plugin.settings.transformParams = value;
+                        this.plugin.settings.imageTransformParams = value;
+                        await this.plugin.saveSettings();
+                    })
+            );
+    }
+
+    addVideoTransformParams(): void {
+        new Setting(this.containerEl)
+            .setName("Video")
+            .addText((text) =>
+                text
+                    .setPlaceholder("w_100,h_100,c_fill")
+                    .setValue(this.plugin.settings.videoTransformParams)
+                    .onChange(async (value) => {
+                        this.plugin.settings.videoTransformParams = value;
+                        await this.plugin.saveSettings();
+                    })
+            );
+    }
+
+    addAudioTransformParams(): void {
+        new Setting(this.containerEl)
+            .setName("Audio")
+            .addText((text) =>
+                text
+                    .setPlaceholder("ac_aac")
+                    .setValue(this.plugin.settings.audioTransformParams)
+                    .onChange(async (value) => {
+                        this.plugin.settings.audioTransformParams = value;
                         await this.plugin.saveSettings();
                     })
             );
