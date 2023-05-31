@@ -1,9 +1,21 @@
-node_modules
+# Idea files
+.idea
 .env
+
+# Dependencies
+node_modules
+
+# Logs
 *-error.log
+
+# Build files
 package-lock.json
 yarn.lock
 .npmrc
 dist/
+
+# OS generated files
 .DS_Store
+
+# Editor files
 data.json
