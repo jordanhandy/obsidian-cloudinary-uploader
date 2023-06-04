@@ -92,7 +92,7 @@ export default class CloudinaryUploaderSettingTab extends PluginSettingTab {
             desc.createEl("br"),
             "Check the ",
             desc.createEl("a", {
-                href: "https://silentvoid13.github.io/Templater/",
+                href: "https://cloudinary.com/documentation/cloudinary_glossary#cloud_name",
                 text: "documentation",
             }),
             " to get know about cloud name"

@@ -2,7 +2,7 @@
 import {
     Notice,
     Plugin,
-    Editor, MarkdownView,
+    Editor, MarkdownView, requestUrl,
 } from "obsidian";
 
 // For API requests
@@ -21,7 +21,7 @@ export default class CloudinaryUploader extends Plugin {
     private isUploading = false;
 
     private validate = () => {
-        if(this.settings.cloudName===""){
+        if (this.settings.cloudName === "") {
             new Notice("☁️ Cloudinary: Cloud Empty ⚠️\nKindly fill cloudinary name & try again", 5000)
             this.isUploading = false;
             this.statusBar.setText("☁️ Cloudinary: Cloud Name Empty ⚠️")
@@ -30,7 +30,7 @@ export default class CloudinaryUploader extends Plugin {
             }, 10000);
             return false;
         }
-        if (this.settings.globalUploadPreset===""){
+        if (this.settings.globalUploadPreset === "") {
             new Notice("☁️ Cloudinary: Global Upload preset Empty ⚠️\nKindly fill upload preset & try again", 5000)
             this.isUploading = false;
             this.statusBar.setText("☁️ Cloudinary: Global Upload Preset Empty ⚠️")
@@ -90,7 +90,7 @@ export default class CloudinaryUploader extends Plugin {
 
     // upload files to cloudinary
     private uploadFiles = async (files: FileList, event, editor) => {
-        if(!this.validate()){
+        if (!this.validate()) {
             return;
         }
         if (files.length > 0) {
@@ -126,6 +126,7 @@ export default class CloudinaryUploader extends Plugin {
                                 method: 'POST',
                                 data: formData
                             })
+
                             // Get response public URL of uploaded image
                             let url = objectPath.get(data, 'secure_url')
 
@@ -225,7 +226,6 @@ export default class CloudinaryUploader extends Plugin {
 
     // Plugin load steps
     async onload(): Promise<void> {
-        new Notice("Cloudinary plugin is loaded", 5000)
         await this.loadSettings();
         // this.setupPasteHandler();
         this.setupHandlers();
@@ -235,10 +235,10 @@ export default class CloudinaryUploader extends Plugin {
 
     // Plugin shutdown steps
     onunload(): void {
-        new Notice("Cloudinary plugin is unloaded", 5000)
+        this.statusBar?.remove();
     }
 
-    // Load settings infromation
+    // Load settings information
     async loadSettings(): Promise<void> {
         this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
     }
