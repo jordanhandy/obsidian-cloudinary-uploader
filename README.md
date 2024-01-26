@@ -1,4 +1,4 @@
-# Obsidian Cloudinary Uploader
+# Cloudinary Uploader for Obsidian
 
 ![Downloads](https://img.shields.io/github/downloads/jordanhandy/obsidian-cloudinary-uploader/main.js.svg)
 ![Version](https://img.shields.io/github/manifest-json/v/jordanhandy/obsidian-cloudinary-uploader?color=blue)
