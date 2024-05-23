@@ -69,6 +69,41 @@ export default class CloudinaryUploaderSettingTab extends PluginSettingTab {
                         }
                     })
             });
+            containerEl.createEl("h4", { text: "Paste Behaviour" });
+            new Setting(containerEl)
+            .setName("Upload on Clipboard Copy/Paste")
+            .setDesc("Upload files on a copy/paste from clipboard")
+            .addToggle((toggle) => {
+                toggle
+                    .setValue(this.plugin.settings.clipboardUpload)
+                    .onChange(async (value) => {
+                        try {
+                            this.plugin.settings.clipboardUpload = value;
+                            await this.plugin.saveSettings();
+                        }
+                        catch (e) {
+                            console.log(e)
+                        }
+                    })
+            });
+            new Setting(containerEl)
+            .setName("Upload on Drag/Drop")
+            .setDesc("Upload files on a drag/drop")
+            .addToggle((toggle) => {
+                toggle
+                    .setValue(this.plugin.settings.dropUpload)
+                    .onChange(async (value) => {
+                        try {
+                            this.plugin.settings.dropUpload = value;
+                            await this.plugin.saveSettings();
+                        }
+                        catch (e) {
+                            console.log(e)
+                        }
+                    })
+            });
+
+
             containerEl.createEl("h4", { text: "URL Manipulations / Transformation" });
             
             // Allow for inline hyperlinks with anchor tags

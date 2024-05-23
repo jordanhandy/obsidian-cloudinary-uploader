@@ -19,8 +19,8 @@ interface CloudinarySettings {
   folder: string;
   f_auto: boolean;
   transformParams: string;
-  //maxWidth: number; TODO
-  // enableResize: boolean; TODO
+  dropUpload: boolean;
+  clipboardUpload: boolean;
 }
 
 // Set settings defaults
@@ -30,22 +30,36 @@ const DEFAULT_SETTINGS: CloudinarySettings = {
   folder: null,
   f_auto: false,
   transformParams: null,
-  //maxWidth: 4096, TODO
-  //enableResize: false, TODO later
+  dropUpload: false,
+  clipboardUpload: true
 };
 export default class CloudinaryUploader extends Plugin {
   settings: CloudinarySettings;
 
+  private setupHandlers(){
+    if(this.settings.clipboardUpload){
+      this.registerEvent(this.app.workspace.on('editor-paste',this.pasteHandler));
+    }
+    if(this.settings.dropUpload){
+      this.registerEvent(this.app.workspace.on('editor-drop',this.dropHandler));
+    }
+  }
+  private pasteHandler = async(event : ClipboardEvent, editor: Editor)=>{
+    const { files } = event.clipboardData;
+    await this.uploadFiles(files,event,editor); // to fix
+  }
+  private dropHandler = async(event: DragEvent, editor: Editor) =>{
+    const { files } = event.dataTransfer;
+    await this.uploadFiles(files,event,editor); // to fix
+  }
 
-  setupPasteHandler(): void {
+  private uploadFiles = async (files: FileList,event,editor) => {
   // On paste event, get "files" from clipbaord data
   // If files contain image, move to API call
   // if Files empty or does not contain image, throw error
-    this.registerEvent(this.app.workspace.on('editor-paste',async (evt: ClipboardEvent, editor: Editor)=>{
-      const { files } = evt.clipboardData;
       if(files.length > 0){
        if (this.settings.cloudName && this.settings.uploadPreset && files[0].type.startsWith("image")) {
-        evt.preventDefault(); // Prevent default paste behaviour
+        event.preventDefault(); // Prevent default paste behaviour
         for (let file of files) {
           const randomString = (Math.random() * 10086).toString(36).substr(0, 8)
           const pastePlaceText = `![uploading...](${randomString})\n`
@@ -84,7 +98,7 @@ export default class CloudinaryUploader extends Plugin {
               modifiedURL = splitURL[0]+="/upload/f_auto/"+splitURL[1];
               imgMarkdownText = `![](${modifiedURL})`;
             
-            // leave stamdard of no transformations added
+            // leave standard of no transformations added
             }else{
             imgMarkdownText = `![](${url})`;
             }
@@ -97,14 +111,8 @@ export default class CloudinaryUploader extends Plugin {
           })
         }
       }
-      // else {
-      // // If not image data, or empty files array
-      //   new Notice("Cloudinary Image Uploader: Please check the image hosting settings.");
-      //   editor.replaceSelection("Please check settings for upload\n This will also appear if file is not of image type");
-      // } 
-
-    }}))
   }
+}
   // Function to replace text
   private replaceText(editor: Editor, target: string, replacement: string): void {
     target = target.trim();
@@ -112,7 +120,6 @@ export default class CloudinaryUploader extends Plugin {
     for (let i = 0; i < editor.lineCount(); i++){
       lines.push(editor.getLine(i));
     }
-    //const tlines = editor.getValue().split("\n");
     for (let i = 0; i < lines.length; i++) {
       const ch = lines[i].indexOf(target)
       if (ch !== -1) {
@@ -128,7 +135,8 @@ export default class CloudinaryUploader extends Plugin {
   async onload(): Promise<void> {
     console.log("loading Cloudinary Uploader");
     await this.loadSettings();
-    this.setupPasteHandler();
+    this.setupHandlers();
+    //this.setupPasteHandler();
     this.addSettingTab(new CloudinaryUploaderSettingTab(this.app, this));
   }
 
