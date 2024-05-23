@@ -68,7 +68,7 @@ export default class CloudinaryUploader extends Plugin {
   // If files contain image, move to API call
   // if Files empty or does not contain image, throw error
       if(files.length > 0){
-       if (this.settings.cloudName && this.settings.uploadPreset && files[0].type.startsWith("image")) {
+       if (this.settings.cloudName && this.settings.uploadPreset) {
         event.preventDefault(); // Prevent default paste behaviour
         for (let file of files) {
           const randomString = (Math.random() * 10086).toString(36).substr(0, 8)
@@ -92,28 +92,31 @@ export default class CloudinaryUploader extends Plugin {
           // Get response public URL of uploaded image
           console.log(res);
             let url = objectPath.get(res.data, 'secure_url')
-            let imgMarkdownText ="";
+            let replaceMarkdownText ="";
 
             // Split URL to allow for appending transformations
             if(this.settings.transformParams){
               const splitURL = url.split("/upload/",2);
-              let modifiedURL='';
-              modifiedURL = splitURL[0]+="/upload/"+this.settings.transformParams+"/"+splitURL[1];
-              imgMarkdownText = `![](${modifiedURL})`;
-              url = modifiedURL
+              url = splitURL[0]+="/upload/"+this.settings.transformParams+"/"+splitURL[1];
+              replaceMarkdownText = `![](${url})`;
             }
             if(this.settings.f_auto){
               const splitURL = url.split("/upload/",2);
-              let modifiedURL='';
-              modifiedURL = splitURL[0]+="/upload/f_auto/"+splitURL[1];
-              imgMarkdownText = `![](${modifiedURL})`;
+              url = splitURL[0]+="/upload/f_auto/"+splitURL[1];
+              replaceMarkdownText = `![](${url})`;
             
             // leave standard of no transformations added
             }else{
-            imgMarkdownText = `![](${url})`;
+            replaceMarkdownText = `![](${url})`;
+            }
+            // Change URL format based on content type
+            if(files[0].type.startsWith("audio")){
+              replaceMarkdownText = `<audio src="${url}" controls></audio>\n`
+            }else if(files[0].type.startsWith("video")){
+              replaceMarkdownText = `<video src="${url}" controls></video>\n`
             }
             // Show MD syntax using uploaded image URL, in Obsidian Editor
-            this.replaceText(editor, pastePlaceText, imgMarkdownText)
+            this.replaceText(editor, pastePlaceText, replaceMarkdownText)
           }, err => {
           // Fail otherwise
             new Notice(err, 5000)
