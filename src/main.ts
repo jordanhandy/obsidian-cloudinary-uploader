@@ -24,6 +24,7 @@ interface CloudinarySettings {
   imageUpload: boolean;
   audioUpload: boolean;
   videoUpload: boolean;
+  rawUpload: boolean;
 }
 
 // Set settings defaults
@@ -37,7 +38,8 @@ const DEFAULT_SETTINGS: CloudinarySettings = {
   clipboardUpload: true,
   imageUpload: true,
   audioUpload: false,
-  videoUpload: false
+  videoUpload: false,
+  rawUpload: false
 };
 export default class CloudinaryUploader extends Plugin {
   settings: CloudinarySettings;
@@ -71,13 +73,16 @@ export default class CloudinaryUploader extends Plugin {
   private uploadFiles = async (files: FileList,event,editor) => {
 
   // On paste event, get "files" from clipbaord or drag data
-  // If files contain image, move to API call
-  // if Files empty or does not contain image, throw error
+  // If files contain image, video, or audio move to API call
+  // if Files empty or does not contain above, then keep default paste behaviour
       if(files.length > 0){
         if((this.settings.audioUpload && files[0].type.startsWith("audio")) ||
           (this.settings.videoUpload && files[0].type.startsWith('video')) ||
-          (this.settings.imageUpload && files[0].type.startsWith('image'))){
-      event.preventDefault(); // Prevent default paste behaviour
+          (this.settings.imageUpload && files[0].type.startsWith('image')) ||
+
+          (this.settings.rawUpload && !files[0].type.startsWith('image')) &&
+           !files[0].type.startsWith('audio') && !files[0].type.startsWith('video') ){
+            event.preventDefault(); // Prevent default paste behaviour
 
        if (this.settings.cloudName && this.settings.uploadPreset) {
         for (let file of files) {
@@ -129,7 +134,7 @@ export default class CloudinaryUploader extends Plugin {
             this.replaceText(editor, pastePlaceText, replaceMarkdownText)
           }, err => {
           // Fail otherwise
-            new Notice(err, 5000)
+            new Notice("There was something wrong with the upload.  PLease check your cloud name and template name before trying again "+err, 5000)
             console.log(err)
           })
         }

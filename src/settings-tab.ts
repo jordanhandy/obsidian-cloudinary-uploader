@@ -222,5 +222,21 @@ export default class CloudinaryUploaderSettingTab extends PluginSettingTab {
                         }
                     })
             });
+            new Setting(containerEl)
+            .setName("Upload Raw Files")
+            .setDesc("Raw files are those files that are not necessarily media files, but Cloudinary will still accept for upload")
+            .addToggle((toggle) => {
+                toggle
+                    .setValue(this.plugin.settings.rawUpload)
+                    .onChange(async (value) => {
+                        try {
+                            this.plugin.settings.rawUpload = value;
+                            await this.plugin.saveSettings();
+                        }
+                        catch (e) {
+                            console.log(e)
+                        }
+                    })
+            });
     }
 }
