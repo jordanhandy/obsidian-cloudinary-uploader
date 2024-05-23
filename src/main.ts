@@ -21,6 +21,9 @@ interface CloudinarySettings {
   transformParams: string;
   dropUpload: boolean;
   clipboardUpload: boolean;
+  imageUpload: boolean;
+  audioUpload: boolean;
+  videoUpload: boolean;
 }
 
 // Set settings defaults
@@ -31,7 +34,10 @@ const DEFAULT_SETTINGS: CloudinarySettings = {
   f_auto: false,
   transformParams: null,
   dropUpload: false,
-  clipboardUpload: true
+  clipboardUpload: true,
+  imageUpload: true,
+  audioUpload: false,
+  videoUpload: false
 };
 export default class CloudinaryUploader extends Plugin {
   settings: CloudinarySettings;

@@ -172,5 +172,55 @@ export default class CloudinaryUploaderSettingTab extends PluginSettingTab {
                         }
                     })
             });
+            containerEl.createEl("h4", { text: "Enabled File Types" });
+            textFragment = document.createDocumentFragment();
+            textFragment.append("Choose which file types are uploaded to Cloudinary.  Disabled types are ignored");
+            containerEl.createEl("p", { text: textFragment });
+
+            new Setting(containerEl)
+            .setName("Upload Images")
+            .addToggle((toggle) => {
+                toggle
+                    .setValue(this.plugin.settings.imageUpload)
+                    .onChange(async (value) => {
+                        try {
+                            this.plugin.settings.imageUpload = value;
+                            await this.plugin.saveSettings();
+                        }
+                        catch (e) {
+                            console.log(e)
+                        }
+                    })
+            });
+            new Setting(containerEl)
+            .setName("Upload Audio")
+            .addToggle((toggle) => {
+                toggle
+                    .setValue(this.plugin.settings.audioUpload)
+                    .onChange(async (value) => {
+                        try {
+                            this.plugin.settings.audioUpload = value;
+                            await this.plugin.saveSettings();
+                        }
+                        catch (e) {
+                            console.log(e)
+                        }
+                    })
+            });
+            new Setting(containerEl)
+            .setName("Upload Video")
+            .addToggle((toggle) => {
+                toggle
+                    .setValue(this.plugin.settings.videoUpload)
+                    .onChange(async (value) => {
+                        try {
+                            this.plugin.settings.videoUpload = value;
+                            await this.plugin.saveSettings();
+                        }
+                        catch (e) {
+                            console.log(e)
+                        }
+                    })
+            });
     }
 }
