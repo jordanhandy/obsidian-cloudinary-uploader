@@ -39,16 +39,20 @@ export default class CloudinaryUploader extends Plugin {
   private setupHandlers(){
     if(this.settings.clipboardUpload){
       this.registerEvent(this.app.workspace.on('editor-paste',this.pasteHandler));
+    }else{
+      this.app.workspace.off('editor-paste',this.pasteHandler);
     }
     if(this.settings.dropUpload){
       this.registerEvent(this.app.workspace.on('editor-drop',this.dropHandler));
+    }else{
+      this.app.workspace.off('editor-drop',this.dropHandler);
     }
   }
   private pasteHandler = async(event : ClipboardEvent, editor: Editor)=>{
     const { files } = event.clipboardData;
     await this.uploadFiles(files,event,editor); // to fix
   }
-  private dropHandler = async(event: DragEvent, editor: Editor) =>{
+  private dropHandler = async(event: DragEventInit, editor: Editor) =>{ 
     const { files } = event.dataTransfer;
     await this.uploadFiles(files,event,editor); // to fix
   }
@@ -153,5 +157,6 @@ export default class CloudinaryUploader extends Plugin {
   // When saving settings
   async saveSettings(): Promise<void> {
     await this.saveData(this.settings);
+    this.setupHandlers();
   }
 }
