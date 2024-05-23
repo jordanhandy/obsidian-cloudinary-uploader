@@ -42,6 +42,11 @@ const DEFAULT_SETTINGS: CloudinarySettings = {
 export default class CloudinaryUploader extends Plugin {
   settings: CloudinarySettings;
 
+  private clearHandlers(){
+    this.app.workspace.off('editor-paste',this.pasteHandler);
+    this.app.workspace.off('editor-drop',this.dropHandler);
+  }
+
   private setupHandlers(){
     if(this.settings.clipboardUpload){
       this.registerEvent(this.app.workspace.on('editor-paste',this.pasteHandler));
@@ -64,12 +69,17 @@ export default class CloudinaryUploader extends Plugin {
   }
 
   private uploadFiles = async (files: FileList,event,editor) => {
-  // On paste event, get "files" from clipbaord data
+
+  // On paste event, get "files" from clipbaord or drag data
   // If files contain image, move to API call
   // if Files empty or does not contain image, throw error
       if(files.length > 0){
+        if((this.settings.audioUpload && files[0].type.startsWith("audio")) ||
+          (this.settings.videoUpload && files[0].type.startsWith('video')) ||
+          (this.settings.imageUpload && files[0].type.startsWith('image'))){
+      event.preventDefault(); // Prevent default paste behaviour
+
        if (this.settings.cloudName && this.settings.uploadPreset) {
-        event.preventDefault(); // Prevent default paste behaviour
         for (let file of files) {
           const randomString = (Math.random() * 10086).toString(36).substr(0, 8)
           const pastePlaceText = `![uploading...](${randomString})\n`
@@ -126,6 +136,7 @@ export default class CloudinaryUploader extends Plugin {
       }
   }
 }
+}
   // Function to replace text
   private replaceText(editor: Editor, target: string, replacement: string): void {
     target = target.trim();
@@ -148,6 +159,7 @@ export default class CloudinaryUploader extends Plugin {
   async onload(): Promise<void> {
     console.log("loading Cloudinary Uploader");
     await this.loadSettings();
+    this.clearHandlers();
     this.setupHandlers();
     //this.setupPasteHandler();
     this.addSettingTab(new CloudinaryUploaderSettingTab(this.app, this));
@@ -156,9 +168,10 @@ export default class CloudinaryUploader extends Plugin {
   // Plugin shutdown steps
   onunload(): void {
     console.log("unloading Cloudinary Uploader");
+    this.clearHandlers();
 
   }
-  // Load settings infromation
+  // Load settings information
   async loadSettings(): Promise<void> {
     this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
   }
@@ -166,6 +179,7 @@ export default class CloudinaryUploader extends Plugin {
   // When saving settings
   async saveSettings(): Promise<void> {
     await this.saveData(this.settings);
+    this.clearHandlers();
     this.setupHandlers();
   }
 }
