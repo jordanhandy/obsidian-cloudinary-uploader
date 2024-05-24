@@ -1,14 +1,13 @@
 # Cloudinary Uploader for Obsidian
 
-![Downloads](https://img.shields.io/github/downloads/jordanhandy/obsidian-cloudinary-uploader/main.js.svg)
-[![GitHub tag](https://img.shields.io/github/tag/jordanhandy/obsidian-cloudinary-uploader?include_prereleases=&sort=semver&color=blue)](https://github.com/jordanhandy/obsidian-cloudinary-uploader/releases/)
+![Downloads](https://img.shields.io/github/downloads/jordanhandy/obsidian-cloudinary-uploader/manifest.json.svg)
 [![License](https://img.shields.io/badge/License-MIT-blue)](#license)
 
 <div align="center">
 
 
 
-[![View site - GH Pages](https://img.shields.io/badge/View_site-GH_Pages-2ea44f?style=for-the-badge)](https://jordanhandy.github.io/obsidian-cloudinary-uploader/)
+[![View site - Retype](https://img.shields.io/badge/View_site-GH_Pages-2ea44f?style=for-the-badge)](https://jordanhandy.github.io/obsidian-cloudinary-uploader/)
 
 </div>
 
