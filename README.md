@@ -1,14 +1,30 @@
 # Cloudinary Uploader for Obsidian
 
 ![Downloads](https://img.shields.io/github/downloads/jordanhandy/obsidian-cloudinary-uploader/main.js.svg)
-![Version](https://img.shields.io/github/manifest-json/v/jordanhandy/obsidian-cloudinary-uploader?color=blue)
+[![GitHub tag](https://img.shields.io/github/tag/jordanhandy/obsidian-cloudinary-uploader?include_prereleases=&sort=semver&color=blue)](https://github.com/jordanhandy/obsidian-cloudinary-uploader/releases/)
+[![License](https://img.shields.io/badge/License-MIT-blue)](#license)
+
+<div align="center">
+
+
+
+[![View site - GH Pages](https://img.shields.io/badge/View_site-GH_Pages-2ea44f?style=for-the-badge)](https://jordanhandy.github.io/obsidian-cloudinary-uploader/)
+
+</div>
+
+
+
+## License
+
+Released under [MIT](/LICENSE) by [@jordanhandy](https://github.com/jordanhandy).
 
 ## Documentation
 [Documentation](https://jordanhandy.github.io/obsidian-cloudinary-uploader/)
 ## What is it?
 [Cloudinary](https://cloudinary.com/) is a cloud storage platform that allows you to upload various media files to a storage account.  The media files within this storage account can then be manipulated using Cloudinary's APIs to manipulate the data properties and metadata.
 
-This plugin allows you to automatically upload images pasted to Obsidian directly into your Cloudinary account (instead of stored locally).  Note:  There is no functionality for media manipulation in this plugin.
+This plugin allows you to automatically upload images, video, audio and raw files pasted to Obsidian directly into your Cloudinary account (instead of stored locally).  Note:  There is functionality for media manipulation in this plugin using Cloudinary's custom parameters
+
 ## How it Works
 ![Action GIF](https://res.cloudinary.com/dakfccuv5/image/upload/v1636859613/Nov-13-2021_22-11-40_bpei0d.gif)
 ## Configuration

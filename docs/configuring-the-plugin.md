@@ -6,7 +6,6 @@ author: Jordan Handy
 icon: gear
 ---
 ## Configuration Steps
-![Obsidian Settings](assets/obsidian-settings-page.png)
 
 To configure the Plugin, you'll need the following information:
 - Cloudinary Cloud Name
