@@ -53,7 +53,7 @@ export default class CloudinaryUploaderSettingTab extends PluginSettingTab {
                     })
             });
             new Setting(containerEl)
-            .setName("Cloudinary Upload Folder")
+            .setName("Cloudinary Root Upload Folder")
             .setDesc("Folder name to use in Cloudinary.  Note, this will be ignored if you have a folder set in your Cloudinary Upload Preset")
             .addText((text) => {
                 text
@@ -236,6 +236,59 @@ export default class CloudinaryUploaderSettingTab extends PluginSettingTab {
                         catch (e) {
                             console.log(e)
                         }
+                    })
+            });
+            containerEl.createEl("h4", { text: "File Type Subfolders" });
+            textFragment = document.createDocumentFragment();
+            textFragment.append("Choose to add subfolders for different asset types.  If not specified, will upload all files in the root folder");
+            containerEl.createEl("p", { text: textFragment });
+
+            new Setting(containerEl)
+            .setName("Image Subfolder")
+            .setDesc("Subfolder name for image files")
+            .addText((text) => {
+                text
+                    .setPlaceholder("image")
+                    .setValue(this.plugin.settings.imageSubfolder)
+                    .onChange(async (value) => {
+                        this.plugin.settings.imageSubfolder = value;
+                        await this.plugin.saveSettings();
+                    })
+            });
+            new Setting(containerEl)
+            .setName("Audio Subfolder")
+            .setDesc("Subfolder name for audio files")
+            .addText((text) => {
+                text
+                    .setPlaceholder("audio")
+                    .setValue(this.plugin.settings.audioSubfolder)
+                    .onChange(async (value) => {
+                        this.plugin.settings.audioSubfolder = value;
+                        await this.plugin.saveSettings();
+                    })
+            });
+            new Setting(containerEl)
+            .setName("Video Subfolder")
+            .setDesc("Subfolder name for video files")
+            .addText((text) => {
+                text
+                    .setPlaceholder("video")
+                    .setValue(this.plugin.settings.videoSubfolder)
+                    .onChange(async (value) => {
+                        this.plugin.settings.videoSubfolder = value;
+                        await this.plugin.saveSettings();
+                    })
+            });
+            new Setting(containerEl)
+            .setName("Raw Subfolder")
+            .setDesc("Subfolder name for raw files")
+            .addText((text) => {
+                text
+                    .setPlaceholder("raw")
+                    .setValue(this.plugin.settings.rawSubfolder)
+                    .onChange(async (value) => {
+                        this.plugin.settings.rawSubfolder = value;
+                        await this.plugin.saveSettings();
                     })
             });
     }

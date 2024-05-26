@@ -25,21 +25,27 @@ interface CloudinarySettings {
   audioUpload: boolean;
   videoUpload: boolean;
   rawUpload: boolean;
+  imageSubfolder: string;
+  videoSubfolder: string;
+  rawSubfolder: string;
 }
 
 // Set settings defaults
 const DEFAULT_SETTINGS: CloudinarySettings = {
-  cloudName: null,
-  uploadPreset: null,
-  folder: null,
+  cloudName: "",
+  uploadPreset: "",
+  folder: "",
   f_auto: false,
-  transformParams: null,
+  transformParams: "",
   dropUpload: false,
   clipboardUpload: true,
   imageUpload: true,
   audioUpload: false,
   videoUpload: false,
-  rawUpload: false
+  rawUpload: false,
+  imageSubfolder: "",
+  videoSubfolder: "",
+  rawSubfolder: "",
 };
 export default class CloudinaryUploader extends Plugin {
   settings: CloudinarySettings;
