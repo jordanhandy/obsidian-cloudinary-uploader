@@ -10,7 +10,7 @@ import {
 import CloudinaryUploader from './main'
 
 //Define Cloudinary Settings
-interface CloudinarySettings {
+export interface CloudinarySettings {
         cloudName: string;
         uploadPreset: string;
         folder: string;

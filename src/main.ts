@@ -11,9 +11,7 @@ import objectPath from 'object-path'
 
 // Settings tab import
 import CloudinaryUploaderSettingTab from './settings-tab'
-import CloudinarySettings from './settings-tab';
-import { DEFAULT_SETTINGS } from "./settings-tab";
-
+import { DEFAULT_SETTINGS, CloudinarySettings } from "./settings-tab";
 export default class CloudinaryUploader extends Plugin {
   settings: CloudinarySettings;
 
