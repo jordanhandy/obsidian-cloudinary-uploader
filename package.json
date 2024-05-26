@@ -1,6 +1,6 @@
 {
   "name": "obsidian-cloudinary-uploader",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "This plugin uploads the media files in your clipboard (or drag and drop) to Cloudinary as unsigned uploads",
   "main": "lib/main.js",
   "license": "MIT",
