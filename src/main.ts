@@ -11,42 +11,9 @@ import objectPath from 'object-path'
 
 // Settings tab import
 import CloudinaryUploaderSettingTab from './settings-tab'
+import CloudinarySettings from './settings-tab';
+import { DEFAULT_SETTINGS } from "./settings-tab";
 
-//Define Cloudinary Settings
-interface CloudinarySettings {
-  cloudName: string;
-  uploadPreset: string;
-  folder: string;
-  f_auto: boolean;
-  transformParams: string;
-  dropUpload: boolean;
-  clipboardUpload: boolean;
-  imageUpload: boolean;
-  audioUpload: boolean;
-  videoUpload: boolean;
-  rawUpload: boolean;
-  imageSubfolder: string;
-  videoSubfolder: string;
-  rawSubfolder: string;
-}
-
-// Set settings defaults
-const DEFAULT_SETTINGS: CloudinarySettings = {
-  cloudName: "",
-  uploadPreset: "",
-  folder: "",
-  f_auto: false,
-  transformParams: "",
-  dropUpload: false,
-  clipboardUpload: true,
-  imageUpload: true,
-  audioUpload: false,
-  videoUpload: false,
-  rawUpload: false,
-  imageSubfolder: "",
-  videoSubfolder: "",
-  rawSubfolder: "",
-};
 export default class CloudinaryUploader extends Plugin {
   settings: CloudinarySettings;
 
@@ -95,14 +62,13 @@ export default class CloudinaryUploader extends Plugin {
           const randomString = (Math.random() * 10086).toString(36).substr(0, 8)
           const pastePlaceText = `![uploading...](${randomString})\n`
           editor.replaceSelection(pastePlaceText) // Generate random string to show on editor screen while API call completes
-
           // Cloudinary request format
           // Send form data with a file and upload preset
           // Optionally define a folder
           const formData = new FormData();
           formData.append('file',file);
           formData.append('upload_preset',this.settings.uploadPreset);
-          formData.append('folder',this.settings.folder);
+          formData.append('folder',this.setSubfolder(file));
 
           // Make API call
           axios({
@@ -148,6 +114,19 @@ export default class CloudinaryUploader extends Plugin {
   }
 }
 }
+
+  // Set subfolder for upload
+  private setSubfolder(file : File){
+    if(file.type.startsWith("image")){
+      return `${this.settings.folder}/${this.settings.imageSubfolder}`;
+    }else if(file.type.startsWith("audio")){
+      return `${this.settings.folder}/${this.settings.audioSubfolder}`;
+    }else if(file.type.startsWith("video")){
+      return `${this.settings.folder}/${this.settings.videoSubfolder}`;
+    }else{
+      return `${this.settings.folder}/${this.settings.rawSubfolder}`;
+    }
+  }
   // Function to replace text
   private replaceText(editor: Editor, target: string, replacement: string): void {
     target = target.trim();
@@ -172,7 +151,6 @@ export default class CloudinaryUploader extends Plugin {
     await this.loadSettings();
     this.clearHandlers();
     this.setupHandlers();
-    //this.setupPasteHandler();
     this.addSettingTab(new CloudinaryUploaderSettingTab(this.app, this));
   }
 

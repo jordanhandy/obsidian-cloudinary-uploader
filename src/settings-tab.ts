@@ -9,7 +9,46 @@ import {
 
 import CloudinaryUploader from './main'
 
+//Define Cloudinary Settings
+interface CloudinarySettings {
+        cloudName: string;
+        uploadPreset: string;
+        folder: string;
+        f_auto: boolean;
+        transformParams: string;
+        dropUpload: boolean;
+        clipboardUpload: boolean;
+        imageUpload: boolean;
+        audioUpload: boolean;
+        videoUpload: boolean;
+        rawUpload: boolean;
+        imageSubfolder: string;
+        audioSubfolder: string;
+        videoSubfolder: string;
+        rawSubfolder: string;
+    }
+export const DEFAULT_SETTINGS: CloudinarySettings = {
+    cloudName: "",
+    uploadPreset: "",
+    folder: "",
+    f_auto: false,
+    transformParams: "",
+    dropUpload: false,
+    clipboardUpload: true,
+    imageUpload: true,
+    audioUpload: false,
+    videoUpload: false,
+    rawUpload: false,
+    imageSubfolder: "",
+    audioSubfolder: "",
+    videoSubfolder: "",
+    rawSubfolder: ""
+};
 export default class CloudinaryUploaderSettingTab extends PluginSettingTab {
+  
+  // Set settings defaults
+
+
     plugin: CloudinaryUploader;
     constructor(app: App, plugin: CloudinaryUploader) {
         super(app, plugin);
@@ -240,7 +279,7 @@ export default class CloudinaryUploaderSettingTab extends PluginSettingTab {
             });
             containerEl.createEl("h4", { text: "File Type Subfolders" });
             textFragment = document.createDocumentFragment();
-            textFragment.append("Choose to add subfolders for different asset types.  If not specified, will upload all files in the root folder");
+            textFragment.append("Choose to add subfolders for different asset types.  If not specified, will upload all files in the root folder.  As mentioned above, this setting will be ignored if you have a default folder set in Cloudinary's settings for your upload preset");
             containerEl.createEl("p", { text: textFragment });
 
             new Setting(containerEl)
