@@ -38,6 +38,12 @@ export default class CloudinaryUploader extends Plugin {
           }
           cloudinary.uploader.unsigned_upload(path,this.settings.uploadPreset,{
             folder: this.settings.folder
+          }).then(res =>{
+            new Notice("Backup of local media files completed. ",0)
+          },err =>{
+            new Notice("There was something wrong with your upload.  Please try again. ",0)
+          })
+
           });
         }
     }
