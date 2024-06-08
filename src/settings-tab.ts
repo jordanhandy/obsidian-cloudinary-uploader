@@ -26,6 +26,8 @@ export interface CloudinarySettings {
         audioSubfolder: string;
         videoSubfolder: string;
         rawSubfolder: string;
+        preserveBackupFilePath: boolean;
+        backupFolder: string;
     }
 export const DEFAULT_SETTINGS: CloudinarySettings = {
     cloudName: "",
@@ -42,7 +44,9 @@ export const DEFAULT_SETTINGS: CloudinarySettings = {
     imageSubfolder: "",
     audioSubfolder: "",
     videoSubfolder: "",
-    rawSubfolder: ""
+    rawSubfolder: "",
+    preserveBackupFilePath: false,
+    backupFolder: ""
 };
 export default class CloudinaryUploaderSettingTab extends PluginSettingTab {
   
@@ -330,5 +334,40 @@ export default class CloudinaryUploaderSettingTab extends PluginSettingTab {
                         await this.plugin.saveSettings();
                     })
             });
+            containerEl.createEl("h4", { text: "Local File Backup" });
+            textFragment = document.createDocumentFragment();
+            textFragment.append("If you run the command to create a backup of vault local assets, these settings apply");
+            containerEl.createEl("p", { text: textFragment });
+
+            new Setting(containerEl)
+            .setName("Backup folder")
+            .setDesc("Root folder where backups are stored.  If not specified and you run a backup, root is specified as the root of your Cloudinary media library")
+            .addText((text) => {
+                text
+                    .setPlaceholder("backups")
+                    .setValue(this.plugin.settings.backupFolder)
+                    .onChange(async (value) => {
+                        this.plugin.settings.backupFolder = value;
+                        await this.plugin.saveSettings();
+                    })
+            });
+
+            new Setting(containerEl)
+            .setName("Preserve File Paths")
+            .setDesc("Preserve file path reslative to root backup folder")
+            .addToggle((toggle) => {
+                toggle
+                    .setValue(this.plugin.settings.preserveBackupFilePath)
+                    .onChange(async (value) => {
+                        try {
+                            this.plugin.settings.preserveBackupFilePath = value;
+                            await this.plugin.saveSettings();
+                        }
+                        catch (e) {
+                            console.log(e)
+                        }
+                    })
+            });
+            
     }
 }

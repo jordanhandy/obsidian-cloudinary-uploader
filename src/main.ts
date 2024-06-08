@@ -25,35 +25,21 @@ export default class CloudinaryUploader extends Plugin {
       }
     });
   }
-  private async uploadVault(){
-    let content;
+  private uploadVault(){
     const files = this.app.vault.getFiles()
     console.log('this is a file ' +files[0]);
-    cloudinary.config({
-      cloud_name: this.settings.cloudName
-    });
     for(let i = 0; i < 50; i++){
       if(files[i].extension != 'md'){
         let path;
-        //content = this.app.vault.readBinary(files[i]).then(res =>{
-          //return res;
-          let adapter = this.app.vault.adapter;
+          const adapter = this.app.vault.adapter;
           if(adapter instanceof FileSystemAdapter){
             path = adapter.getFullPath(files[i].path)
             console.log(path);
           }
-          cloudinary.uploader.unsigned_upload(path,this.settings.uploadPreset);
-        }
-        /*const printContent = () =>{
-          content.then((a)=>{
-            const buffer = Buffer.from(a);
-            const stream = Readable.from(buffer);
-            return stream;
-            
+          cloudinary.uploader.unsigned_upload(path,this.settings.uploadPreset,{
+            folder: this.settings.folder
           });
-        };*/
-        //printContent();
-        // Comment
+        }
     }
   }
   private clearHandlers() {
@@ -62,6 +48,9 @@ export default class CloudinaryUploader extends Plugin {
   }
 
   private setupHandlers() {
+    cloudinary.config({
+      cloud_name: this.settings.cloudName
+    });
     if (this.settings.clipboardUpload) {
       this.registerEvent(this.app.workspace.on('editor-paste', this.pasteHandler));
     } else {
@@ -195,7 +184,7 @@ export default class CloudinaryUploader extends Plugin {
     this.clearHandlers();
     this.setupHandlers();
     this.addSettingTab(new CloudinaryUploaderSettingTab(this.app, this));
-    this.uploadVault();
+    this.setCommands();
   }
 
   // Plugin shutdown steps
