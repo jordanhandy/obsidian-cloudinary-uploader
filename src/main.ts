@@ -3,18 +3,59 @@ import {
   Notice,
   Plugin,
   Editor,
+  FileSystemAdapter
 } from "obsidian";
 
 // For API requests
 import axios from "axios"
 import objectPath from 'object-path'
-
+import { v2 as cloudinary } from 'cloudinary';
 // Settings tab import
 import CloudinaryUploaderSettingTab from './settings-tab'
 import { DEFAULT_SETTINGS, CloudinarySettings } from "./settings-tab";
 export default class CloudinaryUploader extends Plugin {
   settings: CloudinarySettings;
 
+  private setCommands(){
+    this.addCommand({
+      id:"backup-files-cloudinary",
+      name:"Backup media files to Cloudinary",
+      callback: () =>{
+        this.uploadVault();
+      }
+    });
+  }
+  private async uploadVault(){
+    let content;
+    const files = this.app.vault.getFiles()
+    console.log('this is a file ' +files[0]);
+    cloudinary.config({
+      cloud_name: this.settings.cloudName
+    });
+    for(let i = 0; i < 50; i++){
+      if(files[i].extension != 'md'){
+        let path;
+        //content = this.app.vault.readBinary(files[i]).then(res =>{
+          //return res;
+          let adapter = this.app.vault.adapter;
+          if(adapter instanceof FileSystemAdapter){
+            path = adapter.getFullPath(files[i].path)
+            console.log(path);
+          }
+          cloudinary.uploader.unsigned_upload(path,this.settings.uploadPreset);
+        }
+        /*const printContent = () =>{
+          content.then((a)=>{
+            const buffer = Buffer.from(a);
+            const stream = Readable.from(buffer);
+            return stream;
+            
+          });
+        };*/
+        //printContent();
+        // Comment
+    }
+  }
   private clearHandlers() {
     this.app.workspace.off('editor-paste', this.pasteHandler);
     this.app.workspace.off('editor-drop', this.dropHandler);
@@ -154,6 +195,7 @@ export default class CloudinaryUploader extends Plugin {
     this.clearHandlers();
     this.setupHandlers();
     this.addSettingTab(new CloudinaryUploaderSettingTab(this.app, this));
+    this.uploadVault();
   }
 
   // Plugin shutdown steps
