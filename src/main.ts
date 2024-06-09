@@ -36,13 +36,15 @@ export default class CloudinaryUploader extends Plugin {
   }
 
   private uploadNote() {
+    let finalData
     new WarningModal(this.app, (result) => {
       if (result == 'true') {
+        let uploads = [];
         let file = this.app.workspace.getActiveFile();
-        this.app.vault.process(file, (data) => {
-          console.log('data '+data);
+        let data = this.app.vault.cachedRead(file).then((result)=>{
+          data = result;
+        }).then(()=>{
           const found = data.match(/(?:\[\[(?!https?:\/\/).*?\]\])/g);
-          console.log('found '+found);
           for (let find of found) {
             let fileString = find.substring(2, find.length-2);
             console.log('file string '+fileString );
@@ -57,14 +59,21 @@ export default class CloudinaryUploader extends Plugin {
                 resource_type: 'auto'
               }).then(res => {
                 console.log(res);
+                let url = objectPath.get(res, 'secure_url');
+                let replaceMarkdownText = `![](${url})`;
+                data = data.replace(find,replaceMarkdownText);
+                this.app.vault.process(file,(oldData)=>{
+                  console.log('this is data  '+data);
+                  return data;
+                })
               }, err => {
                 console.log(JSON.stringify(err))
                 new Notice("There was something wrong with your upload.  Please try again. " + file.name + '. ' + err.message, 0);
               })
             }
           }
-          return data;
-        })
+        });
+
         return;
       } else {
         return;
