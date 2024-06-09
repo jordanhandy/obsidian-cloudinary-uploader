@@ -187,7 +187,7 @@ export default class CloudinaryUploader extends Plugin {
         if (adapter instanceof FileSystemAdapter) {
           filePath = adapter.getFullPath(fileString)
           cloudinary.uploader.unsigned_upload(filePath, this.settings.uploadPreset, {
-            folder: this.settings.preserveBackupFilePath ? path.join(this.settings.backupFolder, path.dirname(file.path)) : this.settings.backupFolder,
+            folder: this.settings.folder,
             resource_type: 'auto'
           }).then(res => {
             console.log(res);
@@ -196,7 +196,7 @@ export default class CloudinaryUploader extends Plugin {
             url = this.generateTransformParams(url);
             let replaceMarkdownText = this.generateResourceUrl(resType,url);
             data = data.replace(find,replaceMarkdownText);
-            this.app.vault.process(file,(oldData)=>{
+            this.app.vault.process(file,()=>{
               console.log('this is data  '+data);
               return data;
             })
