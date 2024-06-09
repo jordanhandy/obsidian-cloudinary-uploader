@@ -29,21 +29,22 @@ export default class CloudinaryUploader extends Plugin {
   private uploadVault(){
     const files = this.app.vault.getFiles()
     console.log('this is a file ' +files[0]);
-    for(let i = 0; i < 5; i++){
-      if(files[i].extension != 'md'){
+    for(let file of files){
+      if(file.extension != 'md'){
         let filePath;
           const adapter = this.app.vault.adapter;
           if(adapter instanceof FileSystemAdapter){
-            filePath = adapter.getFullPath(files[i].path)
-            //console.log(files[i].path);
-            console.log('path '+ path.join(this.settings.backupFolder,path.dirname(files[i].path)));
+            filePath = adapter.getFullPath(file.path)
+            console.log('path '+ path.join(this.settings.backupFolder,path.dirname(file.path)));
+
           cloudinary.uploader.unsigned_upload(filePath,this.settings.uploadPreset,{
-            folder: this.settings.preserveBackupFilePath ? path.join(this.settings.backupFolder,path.dirname(files[i].path)) : this.settings.backupFolder,
+            folder: this.settings.preserveBackupFilePath ? path.join(this.settings.backupFolder,path.dirname(file.path)) : this.settings.backupFolder,
             resource_type: 'auto'
           }).then(res =>{
             console.log(res);
           },err =>{
-            new Notice("There was something wrong with your upload.  Please try again. "+files[i].name+'. '+err.message,0);
+            console.log(JSON.stringify(err))
+            new Notice("There was something wrong with your upload.  Please try again. "+file.name+'. '+err.message,0);
           })
         }
 
