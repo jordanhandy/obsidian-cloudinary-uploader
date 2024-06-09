@@ -9,6 +9,7 @@ import {
 // For API requests
 import axios from "axios"
 import objectPath from 'object-path'
+import path from 'path'
 import { v2 as cloudinary } from 'cloudinary';
 // Settings tab import
 import CloudinaryUploaderSettingTab from './settings-tab'
@@ -28,35 +29,34 @@ export default class CloudinaryUploader extends Plugin {
   private uploadVault(){
     const files = this.app.vault.getFiles()
     console.log('this is a file ' +files[0]);
-    for(let i = 0; i < 50; i++){
+    for(let i = 0; i < 5; i++){
       if(files[i].extension != 'md'){
-        let path;
+        let filePath;
           const adapter = this.app.vault.adapter;
           if(adapter instanceof FileSystemAdapter){
-            path = adapter.getFullPath(files[i].path)
-            console.log(path);
-          }
-          cloudinary.uploader.unsigned_upload(path,this.settings.uploadPreset,{
-            folder: this.settings.folder
+            filePath = adapter.getFullPath(files[i].path)
+            //console.log(files[i].path);
+            console.log('path '+ path.join(this.settings.backupFolder,path.dirname(files[i].path)));
+          cloudinary.uploader.unsigned_upload(filePath,this.settings.uploadPreset,{
+            folder: this.settings.preserveBackupFilePath ? path.join(this.settings.backupFolder,path.dirname(files[i].path)) : this.settings.backupFolder,
+            resource_type: 'auto'
           }).then(res =>{
-            new Notice("Backup of local media files completed. ",0)
+            console.log(res);
           },err =>{
-            new Notice("There was something wrong with your upload.  Please try again. ",0)
+            new Notice("There was something wrong with your upload.  Please try again. "+err.message,0);
           })
-
-          });
         }
+
+          }
+        }
+        new Notice("Backup of local media files completed.  Be mindful of any error messages displayed as notices.",0);
     }
-  }
   private clearHandlers() {
     this.app.workspace.off('editor-paste', this.pasteHandler);
     this.app.workspace.off('editor-drop', this.dropHandler);
   }
 
   private setupHandlers() {
-    cloudinary.config({
-      cloud_name: this.settings.cloudName
-    });
     if (this.settings.clipboardUpload) {
       this.registerEvent(this.app.workspace.on('editor-paste', this.pasteHandler));
     } else {
@@ -190,6 +190,9 @@ export default class CloudinaryUploader extends Plugin {
     this.clearHandlers();
     this.setupHandlers();
     this.addSettingTab(new CloudinaryUploaderSettingTab(this.app, this));
+    cloudinary.config({
+      cloud_name: this.settings.cloudName
+    });
     this.setCommands();
   }
 
