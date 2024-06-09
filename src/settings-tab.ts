@@ -354,7 +354,7 @@ export default class CloudinaryUploaderSettingTab extends PluginSettingTab {
 
             new Setting(containerEl)
             .setName("Preserve File Paths")
-            .setDesc("Preserve file path reslative to root backup folder")
+            .setDesc("Preserve vault file path relative to root backup folder.  If disabled, assets will be placed in 'root', whether the above backup folder or root of Cloudinary Media library")
             .addToggle((toggle) => {
                 toggle
                     .setValue(this.plugin.settings.preserveBackupFilePath)
@@ -368,6 +368,15 @@ export default class CloudinaryUploaderSettingTab extends PluginSettingTab {
                         }
                     })
             });
+            containerEl.createEl("h5", { text: "File names, file conflicts, overwrite behaviour" });
+            link = document.createElement("a"); 
+            link.text="plugin documentation ";
+            link.href="https://google.ca";
+            textFragment = document.createDocumentFragment();
+            textFragment.append("Assuming all defaults in your Cloudinary Upload Preset settings, all file backups will receive a unique public ID (file name) within the Cloudinary console."+
+            "  This may make it hard to identify.  Additionally, file uploads will always be overwritten.  You can use a combination of settings for unique file naming as found in ");
+            textFragment.append(link);
+            containerEl.createEl("p", { text: textFragment });
             
     }
 }
