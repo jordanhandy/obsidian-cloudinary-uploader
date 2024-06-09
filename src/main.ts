@@ -14,44 +14,61 @@ import { v2 as cloudinary } from 'cloudinary';
 // Settings tab import
 import CloudinaryUploaderSettingTab from './settings-tab'
 import { DEFAULT_SETTINGS, CloudinarySettings } from "./settings-tab";
+import { WarningModal } from "./modal";
 export default class CloudinaryUploader extends Plugin {
   settings: CloudinarySettings;
 
-  private setCommands(){
+  private setCommands() {
     this.addCommand({
-      id:"backup-files-cloudinary",
-      name:"Backup media files to Cloudinary",
-      callback: () =>{
+      id: "backup-files-cloudinary",
+      name: "Backup media files to Cloudinary",
+      callback: () => {
         this.uploadVault();
       }
     });
+    this.addCommand({
+      id: "note-files-to-cloudinary",
+      name: "Upload files in current note to Cloudinary",
+      callback: () => {
+        this.uploadNote();
+      }
+    })
   }
-  private uploadVault(){
-    const files = this.app.vault.getFiles()
-    console.log('this is a file ' +files[0]);
-    for(let file of files){
-      if(file.extension != 'md'){
-        let filePath;
-          const adapter = this.app.vault.adapter;
-          if(adapter instanceof FileSystemAdapter){
-            filePath = adapter.getFullPath(file.path)
-            console.log('path '+ path.join(this.settings.backupFolder,path.dirname(file.path)));
 
-          cloudinary.uploader.unsigned_upload(filePath,this.settings.uploadPreset,{
-            folder: this.settings.preserveBackupFilePath ? path.join(this.settings.backupFolder,path.dirname(file.path)) : this.settings.backupFolder,
+  private uploadNote() {
+    new WarningModal(this.app, (result) => {
+      if (result == 'true') {
+        return;
+      } else {
+        return;
+      }
+    }).open();
+  }
+
+  private uploadVault() {
+    const files = this.app.vault.getFiles()
+    console.log('this is a file ' + files[0]);
+    for (let file of files) {
+      if (file.extension != 'md') {
+        let filePath;
+        const adapter = this.app.vault.adapter;
+        if (adapter instanceof FileSystemAdapter) {
+          filePath = adapter.getFullPath(file.path)
+          cloudinary.uploader.unsigned_upload(filePath, this.settings.uploadPreset, {
+            folder: this.settings.preserveBackupFilePath ? path.join(this.settings.backupFolder, path.dirname(file.path)) : this.settings.backupFolder,
             resource_type: 'auto'
-          }).then(res =>{
+          }).then(res => {
             console.log(res);
-          },err =>{
+          }, err => {
             console.log(JSON.stringify(err))
-            new Notice("There was something wrong with your upload.  Please try again. "+file.name+'. '+err.message,0);
+            new Notice("There was something wrong with your upload.  Please try again. " + file.name + '. ' + err.message, 0);
           })
         }
 
-          }
-        }
-        new Notice("Backup of local media files completed.  Be mindful of any error messages displayed as notices.",0);
+      }
     }
+    new Notice("Backup of local media files completed.  Be mindful of any error messages displayed as notices.", 0);
+  }
   private clearHandlers() {
     this.app.workspace.off('editor-paste', this.pasteHandler);
     this.app.workspace.off('editor-drop', this.dropHandler);
