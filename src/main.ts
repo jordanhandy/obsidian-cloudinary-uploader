@@ -193,6 +193,7 @@ export default class CloudinaryUploader extends Plugin {
             console.log(res);
             let url = objectPath.get(res, 'secure_url');
             let resType = objectPath.get(res,'resource_type');
+            url = this.generateTransformParams(url);
             let replaceMarkdownText = this.generateResourceUrl(resType,url);
             data = data.replace(find,replaceMarkdownText);
             this.app.vault.process(file,(oldData)=>{
