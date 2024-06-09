@@ -26,7 +26,7 @@ export default class CloudinaryUploader extends Plugin {
       callback: () => {
         const files = this.app.vault.getMarkdownFiles()
         for (let file of files) {
-          this.uploadNote(file)
+          this.uploadNoteModal(file)
         }
       }
     });
@@ -35,12 +35,17 @@ export default class CloudinaryUploader extends Plugin {
       name: "Upload files in current note to Cloudinary",
       callback: () => {
         let file = this.app.workspace.getActiveFile();
-        this.uploadNote(file);
+        if(this.settings.ignoreWarnings){
+          this.uploadCurrentNoteFiles(file);
+        }else{
+          this.uploadNoteModal(file);
+
+        }
       }
     })
   }
 
-  private uploadNote(file: TFile) {
+  private uploadNoteModal(file: TFile) {
     new WarningModal(this.app, (result): void => {
       if (result == 'true') {
         this.uploadCurrentNoteFiles(file);
@@ -193,7 +198,7 @@ export default class CloudinaryUploader extends Plugin {
       data = result;
     }).then(() => {
       const found = data.match(/\!\[\[(?!https?:\/\/).*?\]\]/g);
-      for (let find of found) {
+      if(found && found.length > 0) for (let find of found) {
         let fileString = find.substring(2, find.length - 2);
         let filePath;
         const adapter = this.app.vault.adapter;

@@ -28,6 +28,7 @@ export interface CloudinarySettings {
         rawSubfolder: string;
         preserveBackupFilePath: boolean;
         backupFolder: string;
+        ignoreWarnings: boolean;
     }
 export const DEFAULT_SETTINGS: CloudinarySettings = {
     cloudName: "",
@@ -46,7 +47,8 @@ export const DEFAULT_SETTINGS: CloudinarySettings = {
     videoSubfolder: "",
     rawSubfolder: "",
     preserveBackupFilePath: false,
-    backupFolder: ""
+    backupFolder: "",
+    ignoreWarnings: false
 };
 export default class CloudinaryUploaderSettingTab extends PluginSettingTab {
   
@@ -377,6 +379,24 @@ export default class CloudinaryUploaderSettingTab extends PluginSettingTab {
             "  This may make it hard to identify.  Additionally, file uploads will always be overwritten.  You can use a combination of settings for unique file naming as found in ");
             textFragment.append(link);
             containerEl.createEl("p", { text: textFragment });
-            
+
+
+            containerEl.createEl("h4", { text: "Warnings" });
+            new Setting(containerEl)
+            .setName("Hide command palette mass upload warning")
+            .setDesc("Hides the warning modal and assumes that all mass actions are approved")
+            .addToggle((toggle) => {
+                toggle
+                    .setValue(this.plugin.settings.ignoreWarnings)
+                    .onChange(async (value) => {
+                        try {
+                            this.plugin.settings.ignoreWarnings = value;
+                            await this.plugin.saveSettings();
+                        }
+                        catch (e) {
+                            console.log(e)
+                        }
+                    })
+            });
     }
 }
