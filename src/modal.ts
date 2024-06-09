@@ -18,9 +18,13 @@ export class WarningModal extends Modal {
     contentEl.createEl("p", { text: textFragment });
     contentEl.createEl("h1", { text: "Other Information" });
     textFragment = document.createDocumentFragment();
-    textFragment.append("The success of this action largely depends on the following:");
+    textFragment.append("As a precaution, your local files in your vault will NOT be deleted, and will still remain in your vault "+
+    " if you need to reference them.  The success of this action largely depends on the following:");
+    contentEl.createEl("p", { text: textFragment });
     textFragment = document.createDocumentFragment();
     textFragment.append('Your Cloudinary account subscription plan -- different plans have different upload limits');
+    contentEl.createEl("li", { text: textFragment });
+    textFragment = document.createDocumentFragment();
     textFragment.append('The content you upload -- Certain files (example, .exe, .ps1) are not allowed to be uploaded to Cloudinary.  If these are in your vault, the upload of these specific files will fail');
     contentEl.createEl("li", { text: textFragment });
 

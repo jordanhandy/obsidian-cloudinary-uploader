@@ -25,7 +25,7 @@ export default class CloudinaryUploader extends Plugin {
       name: "Backup media files to Cloudinary",
       callback: () => {
         const files = this.app.vault.getMarkdownFiles()
-        for(let file of files){
+        for (let file of files) {
           this.uploadNote(file)
         }
       }
@@ -40,8 +40,8 @@ export default class CloudinaryUploader extends Plugin {
     })
   }
 
-  private uploadNote(file:TFile) {
-    new WarningModal(this.app, (result) :void => {
+  private uploadNote(file: TFile) {
+    new WarningModal(this.app, (result): void => {
       if (result == 'true') {
         this.uploadCurrentNoteFiles(file);
         return;
@@ -50,12 +50,12 @@ export default class CloudinaryUploader extends Plugin {
       }
     }).open();
   }
-  private clearHandlers() : void {
+  private clearHandlers(): void {
     this.app.workspace.off('editor-paste', this.pasteHandler);
     this.app.workspace.off('editor-drop', this.dropHandler);
   }
 
-  private setupHandlers() : void {
+  private setupHandlers(): void {
     if (this.settings.clipboardUpload) {
       this.registerEvent(this.app.workspace.on('editor-paste', this.pasteHandler));
     } else {
@@ -67,11 +67,11 @@ export default class CloudinaryUploader extends Plugin {
       this.app.workspace.off('editor-drop', this.dropHandler);
     }
   }
-  private pasteHandler = async (event: ClipboardEvent, editor: Editor) : Promise<void> => {
+  private pasteHandler = async (event: ClipboardEvent, editor: Editor): Promise<void> => {
     const { files } = event.clipboardData;
     await this.uploadFiles(files, event, editor); // to fix
   }
-  private dropHandler = async (event: DragEventInit, editor: Editor) : Promise<void> => {
+  private dropHandler = async (event: DragEventInit, editor: Editor): Promise<void> => {
     const { files } = event.dataTransfer;
     await this.uploadFiles(files, event, editor); // to fix
   }
@@ -102,7 +102,7 @@ export default class CloudinaryUploader extends Plugin {
             const formData = new FormData();
             formData.append('file', file);
             formData.append('upload_preset', this.settings.uploadPreset);
-            formData.append('folder', this.setSubfolder(file));
+            formData.append('folder', this.setSubfolder(file,undefined));
 
             // Make API call
             axios({
@@ -113,10 +113,10 @@ export default class CloudinaryUploader extends Plugin {
               // Get response public URL of uploaded image
               console.log(res);
               let url = objectPath.get(res.data, 'secure_url');
-              let resType = objectPath.get(res.data,'resource_type');
+              let resType = objectPath.get(res.data, 'resource_type');
               // Split URL to allow for appending transformations
               url = this.generateTransformParams(url);
-              let replaceMarkdownText = this.generateResourceUrl(resType,url);
+              let replaceMarkdownText = this.generateResourceUrl(resType, url);
               // Show MD syntax using uploaded image URL, in Obsidian Editor
               this.replaceText(editor, pastePlaceText, replaceMarkdownText)
             }, err => {
@@ -134,18 +134,31 @@ export default class CloudinaryUploader extends Plugin {
   }
 
   // Set subfolder for upload
-  private setSubfolder(file: File) :string {
-    if (file.type.startsWith("image")) {
-      return `${this.settings.folder}/${this.settings.imageSubfolder}`;
-    } else if (file.type.startsWith("audio")) {
-      return `${this.settings.folder}/${this.settings.audioSubfolder}`;
-    } else if (file.type.startsWith("video")) {
-      return `${this.settings.folder}/${this.settings.videoSubfolder}`;
-    } else {
-      return `${this.settings.folder}/${this.settings.rawSubfolder}`;
+  private setSubfolder(file?: File, resourceType?: string): string {
+    if (file) {
+      if (file.type && file.type.startsWith("image")) {
+        return `${this.settings.folder}/${this.settings.imageSubfolder}`;
+      } else if (file.type.startsWith("audio")) {
+        return `${this.settings.folder}/${this.settings.audioSubfolder}`;
+      } else if (file.type.startsWith("video")) {
+        return `${this.settings.folder}/${this.settings.videoSubfolder}`;
+      } else {
+        return `${this.settings.folder}/${this.settings.rawSubfolder}`;
+      }
+    }else if(resourceType){
+      if (resourceType.startsWith("image")) {
+        return `${this.settings.folder}/${this.settings.imageSubfolder}`;
+      } else if (resourceType.startsWith("audio")) {
+        return `${this.settings.folder}/${this.settings.audioSubfolder}`;
+      } else if (resourceType.startsWith("video")) {
+        return `${this.settings.folder}/${this.settings.videoSubfolder}`;
+      } else {
+        return `${this.settings.folder}/${this.settings.rawSubfolder}`;
+      }
     }
+
   }
-  private generateTransformParams(url : string) : string{
+  private generateTransformParams(url: string): string {
     if (this.settings.transformParams) {
       const splitURL = url.split("/upload/", 2);
       url = splitURL[0] += "/upload/" + this.settings.transformParams + "/" + splitURL[1];
@@ -175,13 +188,13 @@ export default class CloudinaryUploader extends Plugin {
     }
   }
 
-  private uploadCurrentNoteFiles(file :TFile) : void{
-    let data = this.app.vault.cachedRead(file).then((result)=>{
+  private uploadCurrentNoteFiles(file: TFile): void {
+    let data = this.app.vault.cachedRead(file).then((result) => {
       data = result;
-    }).then(()=>{
+    }).then(() => {
       const found = data.match(/\!\[\[(?!https?:\/\/).*?\]\]/g);
       for (let find of found) {
-        let fileString = find.substring(2, find.length-2);
+        let fileString = find.substring(2, find.length - 2);
         let filePath;
         const adapter = this.app.vault.adapter;
         if (adapter instanceof FileSystemAdapter) {
@@ -192,12 +205,31 @@ export default class CloudinaryUploader extends Plugin {
           }).then(res => {
             console.log(res);
             let url = objectPath.get(res, 'secure_url');
-            let resType = objectPath.get(res,'resource_type');
+            let resType = objectPath.get(res, 'resource_type');
+            let pubId = objectPath.get(res,'public_id');
             url = this.generateTransformParams(url);
-            let replaceMarkdownText = this.generateResourceUrl(resType,url);
-            data = data.replace(find,replaceMarkdownText);
-            this.app.vault.process(file,()=>{
-              console.log('this is data  '+data);
+            let replaceMarkdownText = this.generateResourceUrl(resType, url);
+            data = data.replace(find, replaceMarkdownText);
+            this.app.vault.process(file, () => {
+              console.log('this is data  ' + data);
+              return data;
+            })
+          }, err => {
+            console.log(JSON.stringify(err))
+            new Notice("There was something wrong with your upload.  Please try again. " + file.name + '. ' + err.message, 0);
+          })
+          cloudinary.uploader.rename(pubId, this.settings.uploadPreset, {
+            folder: this.settings.folder,
+            resource_type: 'auto'
+          }).then(res => {
+            console.log(res);
+            let url = objectPath.get(res, 'secure_url');
+            let resType = objectPath.get(res, 'resource_type');
+            url = this.generateTransformParams(url);
+            let replaceMarkdownText = this.generateResourceUrl(resType, url);
+            data = data.replace(find, replaceMarkdownText);
+            this.app.vault.process(file, () => {
+              console.log('this is data  ' + data);
               return data;
             })
           }, err => {
@@ -208,12 +240,12 @@ export default class CloudinaryUploader extends Plugin {
       }
     });
   }
-  private generateResourceUrl(type:string,url:string) : string{
-    if(type == 'audio'){
+  private generateResourceUrl(type: string, url: string): string {
+    if (type == 'audio') {
       return `<audio src="${url}" controls></audio>\n`;
-    }else if(type == 'video'){
+    } else if (type == 'video') {
       return `<video src="${url}" controls></video>\n`;
-    }else{
+    } else {
       return `![](${url})`;
     }
   }
