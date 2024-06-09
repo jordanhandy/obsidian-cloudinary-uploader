@@ -3,7 +3,8 @@ import {
   Notice,
   Plugin,
   Editor,
-  FileSystemAdapter
+  FileSystemAdapter,
+  TFile
 } from "obsidian";
 
 // For API requests
@@ -23,22 +24,26 @@ export default class CloudinaryUploader extends Plugin {
       id: "backup-files-cloudinary",
       name: "Backup media files to Cloudinary",
       callback: () => {
-        this.uploadVault();
+        const files = this.app.vault.getMarkdownFiles()
+        for(let file of files){
+          this.uploadNote(file)
+        }
       }
     });
     this.addCommand({
       id: "note-files-to-cloudinary",
       name: "Upload files in current note to Cloudinary",
       callback: () => {
-        this.uploadNote();
+        let file = this.app.workspace.getActiveFile();
+        this.uploadNote(file);
       }
     })
   }
 
-  private uploadNote() {
+  private uploadNote(file:TFile) {
     new WarningModal(this.app, (result) :void => {
       if (result == 'true') {
-        this.uploadCurrentNoteFiles();
+        this.uploadCurrentNoteFiles(file);
         return;
       } else {
         return;
@@ -174,8 +179,7 @@ export default class CloudinaryUploader extends Plugin {
     }
   }
 
-  private uploadCurrentNoteFiles() : void{
-    let file = this.app.workspace.getActiveFile();
+  private uploadCurrentNoteFiles(file :TFile) : void{
     let data = this.app.vault.cachedRead(file).then((result)=>{
       data = result;
     }).then(()=>{
