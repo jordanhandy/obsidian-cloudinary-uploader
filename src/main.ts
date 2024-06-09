@@ -36,7 +36,7 @@ export default class CloudinaryUploader extends Plugin {
   }
 
   private uploadNote() {
-    new WarningModal(this.app, (result) => {
+    new WarningModal(this.app, (result) :void => {
       if (result == 'true') {
         this.uploadCurrentNoteFiles();
         return;
@@ -45,12 +45,12 @@ export default class CloudinaryUploader extends Plugin {
       }
     }).open();
   }
-  private clearHandlers() {
+  private clearHandlers() : void {
     this.app.workspace.off('editor-paste', this.pasteHandler);
     this.app.workspace.off('editor-drop', this.dropHandler);
   }
 
-  private setupHandlers() {
+  private setupHandlers() : void {
     if (this.settings.clipboardUpload) {
       this.registerEvent(this.app.workspace.on('editor-paste', this.pasteHandler));
     } else {
@@ -62,11 +62,11 @@ export default class CloudinaryUploader extends Plugin {
       this.app.workspace.off('editor-drop', this.dropHandler);
     }
   }
-  private pasteHandler = async (event: ClipboardEvent, editor: Editor) => {
+  private pasteHandler = async (event: ClipboardEvent, editor: Editor) : Promise<void> => {
     const { files } = event.clipboardData;
     await this.uploadFiles(files, event, editor); // to fix
   }
-  private dropHandler = async (event: DragEventInit, editor: Editor) => {
+  private dropHandler = async (event: DragEventInit, editor: Editor) : Promise<void> => {
     const { files } = event.dataTransfer;
     await this.uploadFiles(files, event, editor); // to fix
   }
@@ -145,7 +145,7 @@ export default class CloudinaryUploader extends Plugin {
   }
 
   // Set subfolder for upload
-  private setSubfolder(file: File) {
+  private setSubfolder(file: File) :string {
     if (file.type.startsWith("image")) {
       return `${this.settings.folder}/${this.settings.imageSubfolder}`;
     } else if (file.type.startsWith("audio")) {
@@ -174,7 +174,7 @@ export default class CloudinaryUploader extends Plugin {
     }
   }
 
-  private uploadCurrentNoteFiles(){
+  private uploadCurrentNoteFiles() : void{
     let file = this.app.workspace.getActiveFile();
     let data = this.app.vault.cachedRead(file).then((result)=>{
       data = result;
@@ -207,7 +207,7 @@ export default class CloudinaryUploader extends Plugin {
       }
     });
   }
-  private generateResourceUrl(type,url){
+  private generateResourceUrl(type:string,url:string) : string{
     if(type == 'audio'){
       return `<audio src="${url}" controls></audio>\n`;
     }else if(type == 'video'){
