@@ -38,6 +38,33 @@ export default class CloudinaryUploader extends Plugin {
   private uploadNote() {
     new WarningModal(this.app, (result) => {
       if (result == 'true') {
+        let file = this.app.workspace.getActiveFile();
+        this.app.vault.process(file, (data) => {
+          console.log('data '+data);
+          const found = data.match(/(?:\[\[(?!https?:\/\/).*?\]\])/g);
+          console.log('found '+found);
+          for (let find of found) {
+            let fileString = find.substring(2, find.length-2);
+            console.log('file string '+fileString );
+            let filePath;
+            const adapter = this.app.vault.adapter;
+            if (adapter instanceof FileSystemAdapter) {
+              filePath = adapter.getFullPath(fileString)
+              console.log('filepath ' +filePath);
+              console.log('path ' + path.join(this.settings.backupFolder, path.dirname(file.path)));
+              cloudinary.uploader.unsigned_upload(filePath, this.settings.uploadPreset, {
+                folder: this.settings.preserveBackupFilePath ? path.join(this.settings.backupFolder, path.dirname(file.path)) : this.settings.backupFolder,
+                resource_type: 'auto'
+              }).then(res => {
+                console.log(res);
+              }, err => {
+                console.log(JSON.stringify(err))
+                new Notice("There was something wrong with your upload.  Please try again. " + file.name + '. ' + err.message, 0);
+              })
+            }
+          }
+          return data;
+        })
         return;
       } else {
         return;
