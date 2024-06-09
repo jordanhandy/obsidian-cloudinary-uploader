@@ -19,7 +19,7 @@ import { WarningModal } from "./modal";
 export default class CloudinaryUploader extends Plugin {
   settings: CloudinarySettings;
 
-  private setCommands() {
+  private setCommands(): void {
     this.addCommand({
       id: "backup-files-cloudinary",
       name: "Backup media files to Cloudinary",
