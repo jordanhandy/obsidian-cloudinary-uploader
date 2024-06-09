@@ -43,7 +43,7 @@ export default class CloudinaryUploader extends Plugin {
           }).then(res =>{
             console.log(res);
           },err =>{
-            new Notice("There was something wrong with your upload.  Please try again. "+err.message,0);
+            new Notice("There was something wrong with your upload.  Please try again. "+files[i].name+'. '+err.message,0);
           })
         }
 
