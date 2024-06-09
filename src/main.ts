@@ -36,74 +36,14 @@ export default class CloudinaryUploader extends Plugin {
   }
 
   private uploadNote() {
-    let finalData
     new WarningModal(this.app, (result) => {
       if (result == 'true') {
-        let uploads = [];
-        let file = this.app.workspace.getActiveFile();
-        let data = this.app.vault.cachedRead(file).then((result)=>{
-          data = result;
-        }).then(()=>{
-          const found = data.match(/(?:\[\[(?!https?:\/\/).*?\]\])/g);
-          for (let find of found) {
-            let fileString = find.substring(2, find.length-2);
-            console.log('file string '+fileString );
-            let filePath;
-            const adapter = this.app.vault.adapter;
-            if (adapter instanceof FileSystemAdapter) {
-              filePath = adapter.getFullPath(fileString)
-              console.log('filepath ' +filePath);
-              console.log('path ' + path.join(this.settings.backupFolder, path.dirname(file.path)));
-              cloudinary.uploader.unsigned_upload(filePath, this.settings.uploadPreset, {
-                folder: this.settings.preserveBackupFilePath ? path.join(this.settings.backupFolder, path.dirname(file.path)) : this.settings.backupFolder,
-                resource_type: 'auto'
-              }).then(res => {
-                console.log(res);
-                let url = objectPath.get(res, 'secure_url');
-                let replaceMarkdownText = `![](${url})`;
-                data = data.replace(find,replaceMarkdownText);
-                this.app.vault.process(file,(oldData)=>{
-                  console.log('this is data  '+data);
-                  return data;
-                })
-              }, err => {
-                console.log(JSON.stringify(err))
-                new Notice("There was something wrong with your upload.  Please try again. " + file.name + '. ' + err.message, 0);
-              })
-            }
-          }
-        });
-
+        this.uploadCurrentNoteFiles();
         return;
       } else {
         return;
       }
     }).open();
-  }
-
-  private uploadVault() {
-    const files = this.app.vault.getFiles()
-    console.log('this is a file ' + files[0]);
-    for (let file of files) {
-      if (file.extension != 'md') {
-        let filePath;
-        const adapter = this.app.vault.adapter;
-        if (adapter instanceof FileSystemAdapter) {
-          filePath = adapter.getFullPath(file.path)
-          cloudinary.uploader.unsigned_upload(filePath, this.settings.uploadPreset, {
-            folder: this.settings.preserveBackupFilePath ? path.join(this.settings.backupFolder, path.dirname(file.path)) : this.settings.backupFolder,
-            resource_type: 'auto'
-          }).then(res => {
-            console.log(res);
-          }, err => {
-            console.log(JSON.stringify(err))
-            new Notice("There was something wrong with your upload.  Please try again. " + file.name + '. ' + err.message, 0);
-          })
-        }
-
-      }
-    }
-    new Notice("Backup of local media files completed.  Be mindful of any error messages displayed as notices.", 0);
   }
   private clearHandlers() {
     this.app.workspace.off('editor-paste', this.pasteHandler);
@@ -167,23 +107,20 @@ export default class CloudinaryUploader extends Plugin {
             }).then(res => {
               // Get response public URL of uploaded image
               console.log(res);
-              let url = objectPath.get(res.data, 'secure_url')
-              let replaceMarkdownText = "";
-
+              let url = objectPath.get(res.data, 'secure_url');
+              let resType = objectPath.get(res.data,'resource_type');
+              let replaceMarkdownText = this.generateResourceUrl(resType,url);
               // Split URL to allow for appending transformations
               if (this.settings.transformParams) {
                 const splitURL = url.split("/upload/", 2);
                 url = splitURL[0] += "/upload/" + this.settings.transformParams + "/" + splitURL[1];
-                replaceMarkdownText = `![](${url})`;
+                replaceMarkdownText = this.generateResourceUrl(resType,url);
               }
               if (this.settings.f_auto) {
                 const splitURL = url.split("/upload/", 2);
                 url = splitURL[0] += "/upload/f_auto/" + splitURL[1];
-                replaceMarkdownText = `![](${url})`;
-
+                replaceMarkdownText = this.generateResourceUrl(resType,url);
                 // leave standard of no transformations added
-              } else {
-                replaceMarkdownText = `![](${url})`;
               }
               // Change URL format based on content type
               if (files[0].type.startsWith("audio")) {
@@ -234,6 +171,49 @@ export default class CloudinaryUploader extends Plugin {
         editor.replaceRange(replacement, from, to);
         break;
       }
+    }
+  }
+
+  private uploadCurrentNoteFiles(){
+    let file = this.app.workspace.getActiveFile();
+    let data = this.app.vault.cachedRead(file).then((result)=>{
+      data = result;
+    }).then(()=>{
+      const found = data.match(/(?:\[\[(?!https?:\/\/).*?\]\])/g);
+      for (let find of found) {
+        let fileString = find.substring(2, find.length-2);
+        let filePath;
+        const adapter = this.app.vault.adapter;
+        if (adapter instanceof FileSystemAdapter) {
+          filePath = adapter.getFullPath(fileString)
+          cloudinary.uploader.unsigned_upload(filePath, this.settings.uploadPreset, {
+            folder: this.settings.preserveBackupFilePath ? path.join(this.settings.backupFolder, path.dirname(file.path)) : this.settings.backupFolder,
+            resource_type: 'auto'
+          }).then(res => {
+            console.log(res);
+            let url = objectPath.get(res, 'secure_url');
+            let resType = objectPath.get(res,'resource_type');
+            let replaceMarkdownText = this.generateResourceUrl(resType,url);
+            data = data.replace(find,replaceMarkdownText);
+            this.app.vault.process(file,(oldData)=>{
+              console.log('this is data  '+data);
+              return data;
+            })
+          }, err => {
+            console.log(JSON.stringify(err))
+            new Notice("There was something wrong with your upload.  Please try again. " + file.name + '. ' + err.message, 0);
+          })
+        }
+      }
+    });
+  }
+  private generateResourceUrl(type,url){
+    if(type == 'audio'){
+      return `<audio src="${url}" controls></audio>\n`;
+    }else if(type == 'video'){
+      return `<video src="${url}" controls></video>\n`;
+    }else{
+      return `![](${url})`;
     }
   }
 
