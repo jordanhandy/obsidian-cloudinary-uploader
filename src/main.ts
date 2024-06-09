@@ -114,25 +114,9 @@ export default class CloudinaryUploader extends Plugin {
               console.log(res);
               let url = objectPath.get(res.data, 'secure_url');
               let resType = objectPath.get(res.data,'resource_type');
-              let replaceMarkdownText = this.generateResourceUrl(resType,url);
               // Split URL to allow for appending transformations
-              if (this.settings.transformParams) {
-                const splitURL = url.split("/upload/", 2);
-                url = splitURL[0] += "/upload/" + this.settings.transformParams + "/" + splitURL[1];
-                replaceMarkdownText = this.generateResourceUrl(resType,url);
-              }
-              if (this.settings.f_auto) {
-                const splitURL = url.split("/upload/", 2);
-                url = splitURL[0] += "/upload/f_auto/" + splitURL[1];
-                replaceMarkdownText = this.generateResourceUrl(resType,url);
-                // leave standard of no transformations added
-              }
-              // Change URL format based on content type
-              if (files[0].type.startsWith("audio")) {
-                replaceMarkdownText = `<audio src="${url}" controls></audio>\n`
-              } else if (files[0].type.startsWith("video")) {
-                replaceMarkdownText = `<video src="${url}" controls></video>\n`
-              }
+              url = this.generateTransformParams(url);
+              let replaceMarkdownText = this.generateResourceUrl(resType,url);
               // Show MD syntax using uploaded image URL, in Obsidian Editor
               this.replaceText(editor, pastePlaceText, replaceMarkdownText)
             }, err => {
@@ -161,6 +145,18 @@ export default class CloudinaryUploader extends Plugin {
       return `${this.settings.folder}/${this.settings.rawSubfolder}`;
     }
   }
+  private generateTransformParams(url : string) : string{
+    if (this.settings.transformParams) {
+      const splitURL = url.split("/upload/", 2);
+      url = splitURL[0] += "/upload/" + this.settings.transformParams + "/" + splitURL[1];
+    }
+    if (this.settings.f_auto) {
+      const splitURL = url.split("/upload/", 2);
+      url = splitURL[0] += "/upload/f_auto/" + splitURL[1];
+      // leave standard of no transformations added
+    }
+    return url;
+  }
   // Function to replace text
   private replaceText(editor: Editor, target: string, replacement: string): void {
     target = target.trim();
@@ -183,7 +179,7 @@ export default class CloudinaryUploader extends Plugin {
     let data = this.app.vault.cachedRead(file).then((result)=>{
       data = result;
     }).then(()=>{
-      const found = data.match(/(?:\[\[(?!https?:\/\/).*?\]\])/g);
+      const found = data.match(/\!\[\[(?!https?:\/\/).*?\]\]/g);
       for (let find of found) {
         let fileString = find.substring(2, find.length-2);
         let filePath;
