@@ -200,7 +200,7 @@ export default class CloudinaryUploader extends Plugin {
     }).then(() => {
       const found = data.match(/\!\[\[(?!https?:\/\/).*?\]\]/g);
       if(found && found.length > 0) for (let find of found) {
-        let fileString = find.substring(2, find.length - 2);
+        let fileString = find.substring(3, find.length - 2);
         let filePath;
         const adapter = this.app.vault.adapter;
         if (adapter instanceof FileSystemAdapter) {
@@ -212,7 +212,6 @@ export default class CloudinaryUploader extends Plugin {
             console.log(res);
             let url = objectPath.get(res, 'secure_url');
             let resType = objectPath.get(res, 'resource_type');
-            let pubId = objectPath.get(res,'public_id');
             url = this.generateTransformParams(url);
             let replaceMarkdownText = this.generateResourceUrl(resType, url);
             data = data.replace(find, replaceMarkdownText);

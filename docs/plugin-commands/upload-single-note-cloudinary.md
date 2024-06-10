@@ -21,5 +21,7 @@ The success / failure of this plugin largely depends on the following factors:
 ## Warning
 When you first use the option for mass note upload, you will be presented with a warning message explaining the potential dangers of your action.  By default, this warning message will be displayed **every time** you invoke the action.  If you would like to disable this message, toggle the "Hide command palette mass upload warning" option in plugin settings.
 ## Demo
+View a demo of the command below:
+![Demo video - mass upload](https://res.cloudinary.com/dakfccuv5/video/upload/v1718021473/mass-note-upload_qobrpz.mp4)
 
 Continue to [Configuring Cloudinary](configuring-cloudinary.md)
