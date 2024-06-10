@@ -224,24 +224,6 @@ export default class CloudinaryUploader extends Plugin {
             console.log(JSON.stringify(err))
             new Notice("There was something wrong with your upload.  Please try again. " + file.name + '. ' + err.message, 0);
           })
-          cloudinary.uploader.rename(pubId, this.settings.uploadPreset, {
-            folder: this.settings.folder,
-            resource_type: 'auto'
-          }).then(res => {
-            console.log(res);
-            let url = objectPath.get(res, 'secure_url');
-            let resType = objectPath.get(res, 'resource_type');
-            url = this.generateTransformParams(url);
-            let replaceMarkdownText = this.generateResourceUrl(resType, url);
-            data = data.replace(find, replaceMarkdownText);
-            this.app.vault.process(file, () => {
-              console.log('this is data  ' + data);
-              return data;
-            })
-          }, err => {
-            console.log(JSON.stringify(err))
-            new Notice("There was something wrong with your upload.  Please try again. " + file.name + '. ' + err.message, 0);
-          })
         }
       }
     });
