@@ -7,7 +7,7 @@ import {
     Setting,
 } from 'obsidian';
 
-import CloudinaryUploader from "./CloudinaryUploader";
+import CloudinaryUploader from './main'
 
 //Define Cloudinary Settings
 export interface CloudinarySettings {

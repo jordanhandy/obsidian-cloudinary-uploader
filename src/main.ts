@@ -16,6 +16,7 @@ import { v2 as cloudinary } from 'cloudinary';
 import CloudinaryUploaderSettingTab from './settings-tab'
 import { DEFAULT_SETTINGS, CloudinarySettings } from "./settings-tab";
 import { WarningModal } from "./modal";
+import { audioFormats } from "./formats";
 export default class CloudinaryUploader extends Plugin {
   settings: CloudinarySettings;
 
@@ -245,8 +246,20 @@ export default class CloudinaryUploader extends Plugin {
       }
     });
   }
+  // Required as Cloudinary doesn't have an 'audio' resource type.
+  // As we only know the file type after it's been uploaded (we don't know MIME type),
+  // we check if audio was uploaded based on the most-commonly used audio formats
+  private isAudio(url: string, formats:string[]) : boolean{
+    let foundAudio = false;
+    for(let format of formats){
+      if(url.endsWith(format)){
+        foundAudio = true;
+      }
+    }
+    return foundAudio;
+  }
   private generateResourceUrl(type: string, url: string): string {
-    if (type == 'audio') {
+    if (type == 'audio' || this.isAudio(url,audioFormats)) {
       return `<audio src="${url}" controls></audio>\n`;
     } else if (type == 'video') {
       return `<video src="${url}" controls></video>\n`;
