@@ -5,7 +5,7 @@ order: 800
 author: Jordan Handy
 icon: gear
 ---
-## Cloudinary Confiuration Steps
+## Cloudinary Configuration Steps
 1. Log in to Cloudinary and find your Cloud Name here
 ![Cloudinary Dashboard](assets/cloudinary-dash.png)
 2. Enable Unsigned Uploads
@@ -22,3 +22,5 @@ When the preset is created, it will have a "name" associated with it.  Use this 
 !!! Note
 If you have a folder name already configured on Cloudinary under the settings for your specific upload preset (can be configured on Cloudinary itself), this folder setting will be ignored.
 !!!
+
+Continue to [Plugin Commands](plugin-commands.md)
