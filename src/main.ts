@@ -122,7 +122,7 @@ export default class CloudinaryUploader extends Plugin {
               let resType = objectPath.get(res.data, 'resource_type');
               // Split URL to allow for appending transformations
               url = this.generateTransformParams(url);
-              let replaceMarkdownText = this.generateResourceUrl(resType, url);
+              let replaceMarkdownText = this.generateResourceUrl(file.type, url);
               // Show MD syntax using uploaded image URL, in Obsidian Editor
               this.replaceText(editor, pastePlaceText, replaceMarkdownText)
             }, err => {
