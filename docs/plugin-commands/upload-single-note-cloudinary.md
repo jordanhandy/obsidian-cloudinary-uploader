@@ -24,4 +24,4 @@ When you first use the option for mass note upload, you will be presented with a
 View a demo of the command below:
 ![Demo video - mass upload](https://res.cloudinary.com/dakfccuv5/video/upload/v1718021709/mass-note-upload_qnx5ar.mp4)
 
-Continue to [Configuring Cloudinary](configuring-cloudinary.md)
+Continue to [Uploading all note assets to Cloudinary](upload-all-notes-cloudinary.md)
