@@ -151,7 +151,7 @@ export default class CloudinaryUploader extends Plugin {
   }
 
   // Set subfolder for upload
-  private setSubfolder(file?: File, resourceType?: string): string {
+  private setSubfolder(file?: File, resourceUrl?: string): string {
     if (file) {
       if (file.type && file.type.startsWith("image")) {
         return `${this.settings.folder}/${this.settings.imageSubfolder}`;
@@ -162,12 +162,12 @@ export default class CloudinaryUploader extends Plugin {
       } else {
         return `${this.settings.folder}/${this.settings.rawSubfolder}`;
       }
-    }else if(resourceType){
-      if (resourceType.startsWith("image")) {
+    }else if(resourceUrl){
+      if (this.isType(resourceUrl,imageFormats)) {
         return `${this.settings.folder}/${this.settings.imageSubfolder}`;
-      } else if (resourceType.startsWith("audio")) {
+      } else if (this.isType(resourceUrl,audioFormats)) {
         return `${this.settings.folder}/${this.settings.audioSubfolder}`;
-      } else if (resourceType.startsWith("video")) {
+      } else if (this.isType(resourceUrl,videoFormats)) {
         return `${this.settings.folder}/${this.settings.videoSubfolder}`;
       } else {
         return `${this.settings.folder}/${this.settings.rawSubfolder}`;
@@ -235,7 +235,7 @@ export default class CloudinaryUploader extends Plugin {
         if (adapter instanceof FileSystemAdapter) {
           filePath = adapter.getFullPath(fileString)
           cloudinary.uploader.unsigned_upload(filePath, this.settings.uploadPreset, {
-            folder: this.settings.folder,
+            folder: this.setSubfolder(undefined,filePath),
             resource_type: 'auto'
           }).then(res => {
             console.log(res);
@@ -259,19 +259,19 @@ export default class CloudinaryUploader extends Plugin {
   // Required as Cloudinary doesn't have an 'audio' resource type.
   // As we only know the file type after it's been uploaded (we don't know MIME type),
   // we check if audio was uploaded based on the most-commonly used audio formats
-  private isAudio(url: string, formats:string[]) : boolean{
-    let foundAudio = false;
+  private isType(url: string, formats:string[]) : boolean{
+    let foundTypeMatch = false;
     for(let format of formats){
       if(url.endsWith(format)){
-        foundAudio = true;
+        foundTypeMatch = true;
       }
     }
-    return foundAudio;
+    return foundTypeMatch;
   }
   private generateResourceUrl(type: string, url: string): string {
-    if (type == 'audio' || this.isAudio(url,audioFormats)) {
+    if (type == 'audio' || this.isType(url,audioFormats)) {
       return `<audio src="${url}" controls></audio>\n`;
-    } else if (type == 'video') {
+    } else if (type == 'video' || this.isType(url,videoFormats)) {
       return `<video src="${url}" controls></video>\n`;
     } else {
       return `![](${url})`;
