@@ -130,6 +130,7 @@ export default class CloudinaryUploader extends Plugin {
             this.app.vault.process(file, () => {
               return data;
             })
+            new Notice("Upload of note files was completed");
           }, err => {
             console.log(JSON.stringify(err))
             new Notice("There was something wrong with your upload.  Please try again. " + file.name + '. ' + err.message, 0);
