@@ -48,10 +48,7 @@ export default class CloudinaryUploader extends Plugin {
       id: "upload-all-media-assets-cloudinary",
       name: "Upload all vault media assets to Cloudinary",
       callback: () => {
-        const files = this.app.vault.getMarkdownFiles()
-        for (let file of files) {
-          this.uploadNoteModal(file)
-        }
+        this.uploadVault();
       }
     });
   }

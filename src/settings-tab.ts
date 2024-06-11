@@ -336,6 +336,35 @@ export default class CloudinaryUploaderSettingTab extends PluginSettingTab {
                         await this.plugin.saveSettings();
                     })
             });
+            containerEl.createEl("h5", { text: "File names, file conflicts, overwrite behaviour" });
+            link = document.createElement("a"); 
+            link.text="plugin documentation ";
+            link.href="https://google.ca";
+            textFragment = document.createDocumentFragment();
+            textFragment.append("Assuming all defaults in your Cloudinary Upload Preset settings, all file backups will receive a unique public ID (file name) within the Cloudinary console."+
+            "  This may make it hard to identify.  Additionally, file uploads will always be overwritten.  You can use a combination of settings for unique file naming as found in ");
+            textFragment.append(link);
+            containerEl.createEl("p", { text: textFragment });
+
+
+            containerEl.createEl("h4", { text: "Warnings" });
+            new Setting(containerEl)
+            .setName("Hide command palette mass upload warning")
+            .setDesc("Hides the warning modal and assumes that all mass actions are approved")
+            .addToggle((toggle) => {
+                toggle
+                    .setValue(this.plugin.settings.ignoreWarnings)
+                    .onChange(async (value) => {
+                        try {
+                            this.plugin.settings.ignoreWarnings = value;
+                            await this.plugin.saveSettings();
+                        }
+                        catch (e) {
+                            console.log(e)
+                        }
+                    })
+            });
+            containerEl.createEl("h3", { text: "EXPERIMENTAL FEATURES" });
             containerEl.createEl("h4", { text: "Local File Backup" });
             textFragment = document.createDocumentFragment();
             textFragment.append("If you run the command to create a backup of vault local assets, these settings apply");
@@ -363,34 +392,6 @@ export default class CloudinaryUploaderSettingTab extends PluginSettingTab {
                     .onChange(async (value) => {
                         try {
                             this.plugin.settings.preserveBackupFilePath = value;
-                            await this.plugin.saveSettings();
-                        }
-                        catch (e) {
-                            console.log(e)
-                        }
-                    })
-            });
-            containerEl.createEl("h5", { text: "File names, file conflicts, overwrite behaviour" });
-            link = document.createElement("a"); 
-            link.text="plugin documentation ";
-            link.href="https://google.ca";
-            textFragment = document.createDocumentFragment();
-            textFragment.append("Assuming all defaults in your Cloudinary Upload Preset settings, all file backups will receive a unique public ID (file name) within the Cloudinary console."+
-            "  This may make it hard to identify.  Additionally, file uploads will always be overwritten.  You can use a combination of settings for unique file naming as found in ");
-            textFragment.append(link);
-            containerEl.createEl("p", { text: textFragment });
-
-
-            containerEl.createEl("h4", { text: "Warnings" });
-            new Setting(containerEl)
-            .setName("Hide command palette mass upload warning")
-            .setDesc("Hides the warning modal and assumes that all mass actions are approved")
-            .addToggle((toggle) => {
-                toggle
-                    .setValue(this.plugin.settings.ignoreWarnings)
-                    .onChange(async (value) => {
-                        try {
-                            this.plugin.settings.ignoreWarnings = value;
                             await this.plugin.saveSettings();
                         }
                         catch (e) {
