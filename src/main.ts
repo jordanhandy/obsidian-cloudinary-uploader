@@ -45,7 +45,7 @@ export default class CloudinaryUploader extends Plugin {
           }
 
         } else {
-          this.uploadNoteModal(file, 'note');
+          this.uploadNoteModal(undefined, 'note');
         }
 
       }
@@ -75,6 +75,13 @@ export default class CloudinaryUploader extends Plugin {
       } else {
         if (type == 'asset') {
           this.uploadVault();
+          return;
+        } else if (type == 'note') {
+          const files = this.app.vault.getMarkdownFiles()
+          for (let file of files) {
+            this.uploadCurrentNoteFiles(file);
+          }
+
         }
       }
     }).open();
@@ -257,7 +264,6 @@ export default class CloudinaryUploader extends Plugin {
             let replaceMarkdownText = this.generateResourceUrl(resType, url);
             data = data.replace(find, replaceMarkdownText);
             this.app.vault.process(file, () => {
-              console.log('this is data  ' + data);
               return data;
             })
           }, err => {
