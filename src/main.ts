@@ -15,8 +15,7 @@ import { v2 as cloudinary } from 'cloudinary';
 // Settings tab import
 import CloudinaryUploaderSettingTab from './settings-tab'
 import { DEFAULT_SETTINGS, CloudinarySettings } from "./settings-tab";
-import { NoteWarningModal } from "./modals/note-warning-modal";
-import { AssetWarningModal } from "./modals/asset-warning-modal";
+import { NoteWarningModal } from "./note-warning-modal";
 import { audioFormats } from "./formats";
 export default class CloudinaryUploader extends Plugin {
   settings: CloudinarySettings;
@@ -30,7 +29,7 @@ export default class CloudinaryUploader extends Plugin {
         if(this.settings.ignoreWarnings){
           this.uploadCurrentNoteFiles(file);
         }else{
-          this.uploadNoteModal(file);
+          this.uploadNoteModal(file, 'note');
 
         }
       }
@@ -41,7 +40,7 @@ export default class CloudinaryUploader extends Plugin {
       callback: () => {
         const files = this.app.vault.getMarkdownFiles()
         for (let file of files) {
-          this.uploadNoteModal(file)
+          this.uploadNoteModal(file, 'note')
         }
       }
     });
@@ -52,24 +51,14 @@ export default class CloudinaryUploader extends Plugin {
         if(this.settings.ignoreWarnings){
           this.uploadVault();
         }else{
-          this.uploadAssetModal()
+          this.uploadNoteModal(undefined,'asset');
         }
       }
     });
   }
 
-  private uploadNoteModal() : void {
-    new NoteWarningModal(this.app, (result): void => {
-      if (result == 'true') {
-        this.uploadVault();
-        return;
-      } else {
-        return;
-      }
-    }).open();
-  }
-  private uploadAssetModal(file: TFile) : void {
-    new AssetWarningModal(this.app, (result): void => {
+  private uploadNoteModal(file?: TFile, type?:string) : void {
+    new NoteWarningModal(this.app, type, (result): void => {
       if (result == 'true') {
         this.uploadCurrentNoteFiles(file);
         return;
