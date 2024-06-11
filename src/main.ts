@@ -12,6 +12,8 @@ import axios from "axios"
 import objectPath from 'object-path'
 import path from 'path'
 import { v2 as cloudinary } from 'cloudinary';
+
+
 // Settings tab import
 import CloudinaryUploaderSettingTab from './settings-tab'
 import { DEFAULT_SETTINGS, CloudinarySettings } from "./settings-tab";
@@ -65,26 +67,76 @@ export default class CloudinaryUploader extends Plugin {
 
   private uploadNoteModal(file?: TFile, type?: string): void {
     new NoteWarningModal(this.app, type, (result): void => {
-      if (file) {
-        if (result == 'true') {
+      if (result == 'true') {
+        if (file) {
           this.uploadCurrentNoteFiles(file);
           return;
         } else {
-          return;
+          if (type == 'asset') {
+            this.uploadVault();
+            return;
+          } else if (type == 'note') {
+            const files = this.app.vault.getMarkdownFiles()
+            for (let file of files) {
+              this.uploadCurrentNoteFiles(file);
+            }
+
+          }
         }
       } else {
-        if (type == 'asset') {
-          this.uploadVault();
-          return;
-        } else if (type == 'note') {
-          const files = this.app.vault.getMarkdownFiles()
-          for (let file of files) {
-            this.uploadCurrentNoteFiles(file);
-          }
+        return;
+      }
 
+    }).open();
+  }
+  private uploadVault(): void {
+    const files = this.app.vault.getFiles()
+    for (let file of files) {
+      if (file.extension != 'md') {
+        let filePath;
+        const adapter = this.app.vault.adapter;
+        if (adapter instanceof FileSystemAdapter) {
+          filePath = adapter.getFullPath(file.path);
+          console.log(filePath);
+        }
+        cloudinary.uploader.unsigned_upload(filePath, this.settings.uploadPreset, {
+          folder: this.settings.preserveBackupFilePath ? path.join(this.settings.backupFolder, path.dirname(file.path)) : this.settings.backupFolder,
+          resourceType: 'auto'
+        });
+      }
+    }
+  }
+  private uploadCurrentNoteFiles(file: TFile): void {
+    let data = this.app.vault.cachedRead(file).then((result) => {
+      data = result;
+    }).then(() => {
+      const found = data.match(/\!\[\[(?!https?:\/\/).*?\]\]/g);
+      if (found && found.length > 0) for (let find of found) {
+        let fileString = find.substring(3, find.length - 2);
+        let filePath;
+        const adapter = this.app.vault.adapter;
+        if (adapter instanceof FileSystemAdapter) {
+          filePath = adapter.getFullPath(fileString)
+          cloudinary.uploader.unsigned_upload(filePath, this.settings.uploadPreset, {
+            folder: this.setSubfolder(undefined, filePath),
+            resource_type: 'auto'
+          }).then(res => {
+            console.log(res);
+            let url = objectPath.get(res, 'secure_url');
+            let resType = objectPath.get(res, 'resource_type');
+            url = this.generateTransformParams(url);
+            let replaceMarkdownText = this.generateResourceUrl(resType, url);
+            data = data.replace(find, replaceMarkdownText);
+            this.app.vault.process(file, () => {
+              return data;
+            })
+          }, err => {
+            console.log(JSON.stringify(err))
+            new Notice("There was something wrong with your upload.  Please try again. " + file.name + '. ' + err.message, 0);
+          })
         }
       }
-    }).open();
+    });
   }
   private clearHandlers(): void {
     this.app.workspace.off('editor-paste', this.pasteHandler);
@@ -223,57 +275,6 @@ export default class CloudinaryUploader extends Plugin {
       }
     }
   }
-
-  private uploadVault(): void {
-    const files = this.app.vault.getFiles()
-    for (let file of files) {
-      if (file.extension != 'md') {
-        let path;
-        let filePath;
-        const adapter = this.app.vault.adapter;
-        if (adapter instanceof FileSystemAdapter) {
-          filePath = adapter.getFullPath(file.path);
-          console.log(path);
-        }
-        cloudinary.uploader.unsigned_upload(path, this.settings.uploadPreset, {
-          folder: this.settings.preserveBackupFilePath ? path.join(this.settings.backupFolder, path.dirname(file.path)) : this.settings.backupFolder,
-          resourceType: 'auto'
-        });
-      }
-    }
-  }
-  private uploadCurrentNoteFiles(file: TFile): void {
-    let data = this.app.vault.cachedRead(file).then((result) => {
-      data = result;
-    }).then(() => {
-      const found = data.match(/\!\[\[(?!https?:\/\/).*?\]\]/g);
-      if (found && found.length > 0) for (let find of found) {
-        let fileString = find.substring(3, find.length - 2);
-        let filePath;
-        const adapter = this.app.vault.adapter;
-        if (adapter instanceof FileSystemAdapter) {
-          filePath = adapter.getFullPath(fileString)
-          cloudinary.uploader.unsigned_upload(filePath, this.settings.uploadPreset, {
-            folder: this.setSubfolder(undefined, filePath),
-            resource_type: 'auto'
-          }).then(res => {
-            console.log(res);
-            let url = objectPath.get(res, 'secure_url');
-            let resType = objectPath.get(res, 'resource_type');
-            url = this.generateTransformParams(url);
-            let replaceMarkdownText = this.generateResourceUrl(resType, url);
-            data = data.replace(find, replaceMarkdownText);
-            this.app.vault.process(file, () => {
-              return data;
-            })
-          }, err => {
-            console.log(JSON.stringify(err))
-            new Notice("There was something wrong with your upload.  Please try again. " + file.name + '. ' + err.message, 0);
-          })
-        }
-      }
-    });
-  }
   // Required as Cloudinary doesn't have an 'audio' resource type.
   // As we only know the file type after it's been uploaded (we don't know MIME type),
   // we check if audio was uploaded based on the most-commonly used audio formats
@@ -295,7 +296,6 @@ export default class CloudinaryUploader extends Plugin {
       return `![](${url})`;
     }
   }
-
   // Plugin load steps
   async onload(): Promise<void> {
     console.log("loading Cloudinary Uploader");
@@ -306,7 +306,7 @@ export default class CloudinaryUploader extends Plugin {
     cloudinary.config({
       cloud_name: this.settings.cloudName
     });
-    this.setCommands();
+    this.setCommands()
   }
 
   // Plugin shutdown steps
