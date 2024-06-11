@@ -15,7 +15,8 @@ import { v2 as cloudinary } from 'cloudinary';
 // Settings tab import
 import CloudinaryUploaderSettingTab from './settings-tab'
 import { DEFAULT_SETTINGS, CloudinarySettings } from "./settings-tab";
-import { WarningModal } from "./modal";
+import { NoteWarningModal } from "./modals/note-warning-modal";
+import { AssetWarningModal } from "./modals/asset-warning-modal";
 import { audioFormats } from "./formats";
 export default class CloudinaryUploader extends Plugin {
   settings: CloudinarySettings;
@@ -48,13 +49,27 @@ export default class CloudinaryUploader extends Plugin {
       id: "upload-all-media-assets-cloudinary",
       name: "Upload all vault media assets to Cloudinary",
       callback: () => {
-        this.uploadVault();
+        if(this.settings.ignoreWarnings){
+          this.uploadVault();
+        }else{
+          this.uploadAssetModal()
+        }
       }
     });
   }
 
-  private uploadNoteModal(file: TFile) {
-    new WarningModal(this.app, (result): void => {
+  private uploadNoteModal() : void {
+    new NoteWarningModal(this.app, (result): void => {
+      if (result == 'true') {
+        this.uploadVault();
+        return;
+      } else {
+        return;
+      }
+    }).open();
+  }
+  private uploadAssetModal(file: TFile) : void {
+    new AssetWarningModal(this.app, (result): void => {
       if (result == 'true') {
         this.uploadCurrentNoteFiles(file);
         return;
