@@ -26,9 +26,9 @@ export default class CloudinaryUploader extends Plugin {
       name: "Upload files in current note to Cloudinary",
       callback: () => {
         let file = this.app.workspace.getActiveFile();
-        if(this.settings.ignoreWarnings){
+        if (this.settings.ignoreWarnings) {
           this.uploadCurrentNoteFiles(file);
-        }else{
+        } else {
           this.uploadNoteModal(file, 'note');
 
         }
@@ -39,31 +39,43 @@ export default class CloudinaryUploader extends Plugin {
       name: "Upload all note files to Cloudinary",
       callback: () => {
         const files = this.app.vault.getMarkdownFiles()
-        for (let file of files) {
-          this.uploadNoteModal(file, 'note')
+        if (this.settings.ignoreWarnings) {
+          for (let file of files) {
+            this.uploadCurrentNoteFiles(file);
+          }
+
+        } else {
+          this.uploadNoteModal(file, 'note');
         }
+
       }
     });
     this.addCommand({
       id: "upload-all-media-assets-cloudinary",
       name: "Upload all vault media assets to Cloudinary",
       callback: () => {
-        if(this.settings.ignoreWarnings){
+        if (this.settings.ignoreWarnings) {
           this.uploadVault();
-        }else{
-          this.uploadNoteModal(undefined,'asset');
+        } else {
+          this.uploadNoteModal(undefined, 'asset');
         }
       }
     });
   }
 
-  private uploadNoteModal(file?: TFile, type?:string) : void {
+  private uploadNoteModal(file?: TFile, type?: string): void {
     new NoteWarningModal(this.app, type, (result): void => {
-      if (result == 'true') {
-        this.uploadCurrentNoteFiles(file);
-        return;
+      if (file) {
+        if (result == 'true') {
+          this.uploadCurrentNoteFiles(file);
+          return;
+        } else {
+          return;
+        }
       } else {
-        return;
+        if (type == 'asset') {
+          this.uploadVault();
+        }
       }
     }).open();
   }
@@ -119,7 +131,7 @@ export default class CloudinaryUploader extends Plugin {
             const formData = new FormData();
             formData.append('file', file);
             formData.append('upload_preset', this.settings.uploadPreset);
-            formData.append('folder', this.setSubfolder(file,undefined));
+            formData.append('folder', this.settings.folder != '' ? this.setSubfolder(file, undefined) : '');
 
             // Make API call
             axios({
@@ -162,12 +174,12 @@ export default class CloudinaryUploader extends Plugin {
       } else {
         return `${this.settings.folder}/${this.settings.rawSubfolder}`;
       }
-    }else if(resourceUrl){
-      if (this.isType(resourceUrl,imageFormats)) {
+    } else if (resourceUrl) {
+      if (this.isType(resourceUrl, imageFormats)) {
         return `${this.settings.folder}/${this.settings.imageSubfolder}`;
-      } else if (this.isType(resourceUrl,audioFormats)) {
+      } else if (this.isType(resourceUrl, audioFormats)) {
         return `${this.settings.folder}/${this.settings.audioSubfolder}`;
-      } else if (this.isType(resourceUrl,videoFormats)) {
+      } else if (this.isType(resourceUrl, videoFormats)) {
         return `${this.settings.folder}/${this.settings.videoSubfolder}`;
       } else {
         return `${this.settings.folder}/${this.settings.rawSubfolder}`;
@@ -205,22 +217,22 @@ export default class CloudinaryUploader extends Plugin {
     }
   }
 
-  private uploadVault() : void{
+  private uploadVault(): void {
     const files = this.app.vault.getFiles()
-    for(let file of files){
-      if(file.extension != 'md'){
+    for (let file of files) {
+      if (file.extension != 'md') {
         let path;
         let filePath;
-          const adapter = this.app.vault.adapter;
-          if(adapter instanceof FileSystemAdapter){
-            filePath = adapter.getFullPath(file.path);
-            console.log(path);
-          }
-          cloudinary.uploader.unsigned_upload(path,this.settings.uploadPreset,{
-            folder: this.settings.preserveBackupFilePath ? path.join(this.settings.backupFolder,path.dirname(file.path)) : this.settings.backupFolder,
-            resourceType: 'auto'
-          });
+        const adapter = this.app.vault.adapter;
+        if (adapter instanceof FileSystemAdapter) {
+          filePath = adapter.getFullPath(file.path);
+          console.log(path);
         }
+        cloudinary.uploader.unsigned_upload(path, this.settings.uploadPreset, {
+          folder: this.settings.preserveBackupFilePath ? path.join(this.settings.backupFolder, path.dirname(file.path)) : this.settings.backupFolder,
+          resourceType: 'auto'
+        });
+      }
     }
   }
   private uploadCurrentNoteFiles(file: TFile): void {
@@ -228,14 +240,14 @@ export default class CloudinaryUploader extends Plugin {
       data = result;
     }).then(() => {
       const found = data.match(/\!\[\[(?!https?:\/\/).*?\]\]/g);
-      if(found && found.length > 0) for (let find of found) {
+      if (found && found.length > 0) for (let find of found) {
         let fileString = find.substring(3, find.length - 2);
         let filePath;
         const adapter = this.app.vault.adapter;
         if (adapter instanceof FileSystemAdapter) {
           filePath = adapter.getFullPath(fileString)
           cloudinary.uploader.unsigned_upload(filePath, this.settings.uploadPreset, {
-            folder: this.setSubfolder(undefined,filePath),
+            folder: this.setSubfolder(undefined, filePath),
             resource_type: 'auto'
           }).then(res => {
             console.log(res);
@@ -259,19 +271,19 @@ export default class CloudinaryUploader extends Plugin {
   // Required as Cloudinary doesn't have an 'audio' resource type.
   // As we only know the file type after it's been uploaded (we don't know MIME type),
   // we check if audio was uploaded based on the most-commonly used audio formats
-  private isType(url: string, formats:string[]) : boolean{
+  private isType(url: string, formats: string[]): boolean {
     let foundTypeMatch = false;
-    for(let format of formats){
-      if(url.endsWith(format)){
+    for (let format of formats) {
+      if (url.endsWith(format)) {
         foundTypeMatch = true;
       }
     }
     return foundTypeMatch;
   }
   private generateResourceUrl(type: string, url: string): string {
-    if (type == 'audio' || this.isType(url,audioFormats)) {
+    if (type == 'audio' || this.isType(url, audioFormats)) {
       return `<audio src="${url}" controls></audio>\n`;
-    } else if (type == 'video' || this.isType(url,videoFormats)) {
+    } else if (type == 'video' || this.isType(url, videoFormats)) {
       return `<video src="${url}" controls></video>\n`;
     } else {
       return `![](${url})`;
