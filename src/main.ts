@@ -22,17 +22,7 @@ export default class CloudinaryUploader extends Plugin {
 
   private setCommands(): void {
     this.addCommand({
-      id: "backup-files-cloudinary",
-      name: "Backup media files to Cloudinary",
-      callback: () => {
-        const files = this.app.vault.getMarkdownFiles()
-        for (let file of files) {
-          this.uploadNoteModal(file)
-        }
-      }
-    });
-    this.addCommand({
-      id: "note-files-to-cloudinary",
+      id: "upload-single-note-files-to-cloudinary",
       name: "Upload files in current note to Cloudinary",
       callback: () => {
         let file = this.app.workspace.getActiveFile();
@@ -43,7 +33,27 @@ export default class CloudinaryUploader extends Plugin {
 
         }
       }
-    })
+    });
+    this.addCommand({
+      id: "upload-all-note-files-cloudinary",
+      name: "Upload all note files to Cloudinary",
+      callback: () => {
+        const files = this.app.vault.getMarkdownFiles()
+        for (let file of files) {
+          this.uploadNoteModal(file)
+        }
+      }
+    });
+    this.addCommand({
+      id: "upload-all-media-assets-cloudinary",
+      name: "Upload all vault media assets to Cloudinary",
+      callback: () => {
+        const files = this.app.vault.getMarkdownFiles()
+        for (let file of files) {
+          this.uploadNoteModal(file)
+        }
+      }
+    });
   }
 
   private uploadNoteModal(file: TFile) {
@@ -194,6 +204,24 @@ export default class CloudinaryUploader extends Plugin {
     }
   }
 
+  private uploadVault() : void{
+    const files = this.app.vault.getFiles()
+    for(let file of files){
+      if(file.extension != 'md'){
+        let path;
+        let filePath;
+          const adapter = this.app.vault.adapter;
+          if(adapter instanceof FileSystemAdapter){
+            filePath = adapter.getFullPath(file.path);
+            console.log(path);
+          }
+          cloudinary.uploader.unsigned_upload(path,this.settings.uploadPreset,{
+            folder: this.settings.preserveBackupFilePath ? path.join(this.settings.backupFolder,path.dirname(file.path)) : this.settings.backupFolder,
+            resourceType: 'auto'
+          });
+        }
+    }
+  }
   private uploadCurrentNoteFiles(file: TFile): void {
     let data = this.app.vault.cachedRead(file).then((result) => {
       data = result;
