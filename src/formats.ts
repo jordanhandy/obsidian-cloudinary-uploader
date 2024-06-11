@@ -1,3 +1,48 @@
-export const audioFormats : string[] = ['mp3','wav','m4a','aac','ogg',
-'flac','wma','aiff','ape','opus','amr','pcm','au','ra','mka','ac3','mid','midi',
-'mp2','wv','dts'];
+export const audioFormats: string[] = ["mp3", "wav", "m4a", "aac", "ogg",
+    "flac", "wma", "aiff", "ape", "opus", "amr", "pcm", "au", "ra", "mka", "ac3", "mid", "midi",
+    "mp2", "wv", "dts"];
+
+export const imageFormats: string[] = [
+    "jpg",
+    "jpeg",
+    "png",
+    "gif",
+    "tiff",
+    "bmp",
+    "svg",
+    "raw",
+    "pdf",
+    "psd",
+    "eps",
+    "jp2",
+    "webp",
+    "heic",
+    "ico",
+    "tga",
+    "pict",
+    "pcx",
+    "wmf",
+    "exif"
+];
+export const videoFormats : string[] = [
+    "mp4",
+    "mov",
+    "avi",
+    "mkv",
+    "wmv",
+    "flv",
+    "webm",
+    "m4v",
+    "mpeg",
+    "mpg",
+    "3gp",
+    "ogg",
+    "qt",
+    "asf",
+    "rm",
+    "rmvb",
+    "m2ts",
+    "ts",
+    "vob",
+    "divx"
+  ];

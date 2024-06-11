@@ -16,7 +16,7 @@ import { v2 as cloudinary } from 'cloudinary';
 import CloudinaryUploaderSettingTab from './settings-tab'
 import { DEFAULT_SETTINGS, CloudinarySettings } from "./settings-tab";
 import { NoteWarningModal } from "./note-warning-modal";
-import { audioFormats } from "./formats";
+import { audioFormats, imageFormats, videoFormats } from "./formats";
 export default class CloudinaryUploader extends Plugin {
   settings: CloudinarySettings;
 
