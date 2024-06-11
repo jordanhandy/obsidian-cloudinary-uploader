@@ -23,4 +23,8 @@ When the preset is created, it will have a "name" associated with it.  Use this 
 If you have a folder name already configured on Cloudinary under the settings for your specific upload preset (can be configured on Cloudinary itself), this folder setting will be ignored.
 !!!
 
+## Cloudinary and Potential Duplicate Uploads
+I recommend double-checking all of your Cloudinary Upload Preset settings before you begin to use the plugin.
+[!ref Cloudinary Duplication](cloudinary-duplication.md)
+
 Continue to [Plugin Commands](plugin-commands.md)

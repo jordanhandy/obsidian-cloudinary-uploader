@@ -339,7 +339,7 @@ export default class CloudinaryUploaderSettingTab extends PluginSettingTab {
             containerEl.createEl("h5", { text: "File names, file conflicts, overwrite behaviour" });
             link = document.createElement("a"); 
             link.text="plugin documentation ";
-            link.href="https://google.ca";
+            link.href="https://jordanhandy.github.io/obsidian-cloudinary-uploader/cloudinary-duplication/";
             textFragment = document.createDocumentFragment();
             textFragment.append("Assuming all defaults in your Cloudinary Upload Preset settings, all file backups will receive a unique public ID (file name) within the Cloudinary console."+
             "  This may make it hard to identify.  Additionally, file uploads will always be overwritten.  You can use a combination of settings for unique file naming as found in ");
