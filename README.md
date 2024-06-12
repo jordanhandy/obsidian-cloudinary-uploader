@@ -28,7 +28,8 @@ This plugin allows you to automatically upload images, video, audio and raw file
 ### Single File Upload
 ![Action GIF](https://res.cloudinary.com/dakfccuv5/image/upload/v1636859613/Nov-13-2021_22-11-40_bpei0d.gif)
 ### Multi-file Upload
-![Action GIF](https://res.cloudinary.com/dakfccuv5/image/upload/v1718193166/yfxk7wr5pniro52cs2fi.gif)
+https://github.com/jordanhandy/obsidian-cloudinary-uploader/assets/6423379/6b81fd36-c09e-4bd6-a313-0ec25e723251
+
 ## Configuration
 1. Disable Obsidian Safe Mode
 2. Install the Plugin
