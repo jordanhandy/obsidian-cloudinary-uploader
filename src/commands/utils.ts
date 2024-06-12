@@ -164,26 +164,35 @@ export function isType(url: string, formats: string[]): boolean {
 // Determine the subfolder to place the uploaded
 // file in, based on file type uploaded
 export function setSubfolder(file: File, resourceUrl: string, plugin: CloudinaryUploader): string {
+  let result="";
   if (file) {
-    if (file.type && file.type.startsWith("image")) {
-      return `${plugin.settings.folder}/${plugin.settings.imageSubfolder}`;
-    } else if (file.type.startsWith("audio")) {
-      return `${plugin.settings.folder}/${plugin.settings.audioSubfolder}`;
-    } else if (file.type.startsWith("video")) {
-      return `${plugin.settings.folder}/${plugin.settings.videoSubfolder}`;
-    } else {
-      return `${plugin.settings.folder}/${plugin.settings.rawSubfolder}`;
+    if (file.type && file.type.startsWith("image") && plugin.settings.imageSubfolder) {
+      result = `${plugin.settings.imageSubfolder}`;
+    } else if (file.type.startsWith("audio") && plugin.settings.audioSubfolder) {
+      result = `${plugin.settings.audioSubfolder}`;
+    } else if (file.type.startsWith("video") && plugin.settings.videoSubfolder ) {
+      result = `${plugin.settings.videoSubfolder}`;
+    } else if(plugin.settings.rawSubfolder) {
+      result = `${plugin.settings.rawSubfolder}`;
     }
   } else if (resourceUrl) {
-    if (isType(resourceUrl, imageFormats)) {
-      return `${plugin.settings.folder}/${plugin.settings.imageSubfolder}`;
-    } else if (isType(resourceUrl, audioFormats)) {
-      return `${plugin.settings.folder}/${plugin.settings.audioSubfolder}`;
-    } else if (isType(resourceUrl, videoFormats)) {
-      return `${plugin.settings.folder}/${plugin.settings.videoSubfolder}`;
-    } else {
-      return `${plugin.settings.folder}/${plugin.settings.rawSubfolder}`;
+    if (isType(resourceUrl, imageFormats) && plugin.settings.imageSubfolder) {
+      result = `${plugin.settings.folder}/${plugin.settings.imageSubfolder}`;
+    } else if (isType(resourceUrl, audioFormats) && plugin.settings.audioSubfolder) {
+      result = `${plugin.settings.folder}/${plugin.settings.audioSubfolder}`;
+    } else if (isType(resourceUrl, videoFormats) && plugin.settings.videoSubfolder) {
+      result = `${plugin.settings.folder}/${plugin.settings.videoSubfolder}`;
+    } else if(plugin.settings.rawSubfolder) {
+      result = `${plugin.settings.folder}/${plugin.settings.rawSubfolder}`;
     }
   }
+  if(plugin.settings.folder && result != ""){
+    result = `${plugin.settings.folder}/${result}`
+  }else if(plugin.settings.folder){
+    result = `${plugin.settings.folder}`;
+  }else{
+    result ="";
+  }
+  return result;
 
 }
