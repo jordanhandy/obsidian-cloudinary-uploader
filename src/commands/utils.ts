@@ -219,6 +219,8 @@ export function setSubfolder(file: File, resourceUrl: string, plugin: Cloudinary
   }
   if(plugin.settings.folder && result != ""){
     result = `${plugin.settings.folder}/${result}`
+  }else if(!plugin.settings.folder && result != ""){
+    result = `${result}`
   }else if(plugin.settings.folder){
     result = `${plugin.settings.folder}`;
   }else{
