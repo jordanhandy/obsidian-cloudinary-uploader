@@ -25,7 +25,10 @@ Released under [MIT](/LICENSE) by [@jordanhandy](https://github.com/jordanhandy)
 This plugin allows you to automatically upload images, video, audio and raw files pasted to Obsidian directly into your Cloudinary account (instead of stored locally).  Note:  There is functionality for media manipulation in this plugin using Cloudinary's custom parameters
 
 ## How it Works
+### Single File Upload
 ![Action GIF](https://res.cloudinary.com/dakfccuv5/image/upload/v1636859613/Nov-13-2021_22-11-40_bpei0d.gif)
+### Multi-file Upload
+![Multi File](https://res.cloudinary.com/dakfccuv5/video/upload/v1718021709/mass-note-upload_qnx5ar.mp4)
 ## Configuration
 1. Disable Obsidian Safe Mode
 2. Install the Plugin
