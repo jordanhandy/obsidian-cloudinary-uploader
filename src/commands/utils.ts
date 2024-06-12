@@ -22,12 +22,26 @@ export function uploadNoteModal(file?: TFile, type: string, plugin: CloudinaryUp
           fetchMessages(plugin);
           //uploadVault(plugin); // Upload vault function
           return;
-        } else if (type == 'note') {  //! If no file passed, but 'notes' to be uploaded, this means all notes are requested.
-          const files = plugin.app.vault.getMarkdownFiles()
-          for (let file of files) {
-            uploadCurrentNoteFiles(file, plugin);
-          }
-
+        } else if (type == 'note') {  //! If no file passed, but 'notes' to be uploaded, this means all notes are requested.     
+          uploadAllNotes(plugin).then((returns) => {
+            let errorFlag = false;
+            if (returns.length > 0) {
+              for (let msgs of returns) {
+                if (msgs.length > 0) {
+  
+                  // If errors
+                  errorFlag = true
+                  new Notice("There were errors completing your operation.  Please look at the developer console for further information", 0);
+                  for (let msg of msgs) {
+                    console.warn(msg);
+                  }
+                }
+  
+              }
+            } if (!errorFlag) {
+              new Notice("The operation is complete.  No errors to report", 0);
+            }
+          });
         }
       }
     } else {
@@ -36,6 +50,18 @@ export function uploadNoteModal(file?: TFile, type: string, plugin: CloudinaryUp
 
   }).open();
 }
+// This function used to upload mass note files
+export async function uploadAllNotes(plugin:CloudinaryUploader): Promise<string[]> {
+  let returnData = []
+  const files = plugin.app.vault.getMarkdownFiles()
+    for (let file of files) {
+      await uploadCurrentNoteFiles(file, plugin).then((res) => {
+        returnData.push(res);
+      });
+    }
+    return returnData;
+}
+
 
 export async function uploadVault(plugin: CloudinaryUploader): Promise<string[][]> {
   let successMessages = [];

@@ -33,15 +33,25 @@ export default class CloudinaryUploader extends Plugin {
       }
     });
     this.addCommand({
+      //* If we're uploading all note files, we loop over the standard
+      //* note file upload function
       id: "upload-all-note-files-cloudinary",
       name: "Upload all note files to Cloudinary",
       callback: () => {
         if(this.settings.ignoreWarnings){
+          // If we were to do the standard loop,
+          // success / failure messages would be shown for each
+          // success / failure.  Has the potential to hang up the program
+          // if there are many assets uploaded.
+
+          // Upload Notes waits until all uploads done
         uploadAllNotes(this).then((returns) => {
           let errorFlag = false;
           if (returns.length > 0) {
             for (let msgs of returns) {
               if (msgs.length > 0) {
+
+                // If errors
                 errorFlag = true
                 new Notice("There were errors completing your operation.  Please look at the developer console for further information", 0);
                 for (let msg of msgs) {
@@ -55,6 +65,8 @@ export default class CloudinaryUploader extends Plugin {
           }
         });
 
+      }else{
+        uploadNoteModal(undefined,'note',this);
       }
     }
     });
