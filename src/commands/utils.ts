@@ -56,17 +56,23 @@ export async function uploadVault(plugin: CloudinaryUploader): Promise<string[][
         folder: plugin.settings.preserveBackupFilePath ? path.join(plugin.settings.backupFolder, path.dirname(file.path)) : plugin.settings.backupFolder,
         resource_type: 'auto'
       }).then(res=>{
+        // add to success messages array
         successMessages.push('success')
-        //new Notice("Vault upload completed",0);
       },err=>{
+        // add to failure messages array
         failureMessages.push(err.message);
-       // new Notice("There was an error somewhere uploading your files  "+err.message);
       });
     }
   }
+  // send messages
   return [successMessages,failureMessages];
 }
-async function fetchMessages(plugin:CloudinaryUploader){
+
+//* This function fetches messages from the mass upload job
+//* as this could take a while if the vault is larger
+async function fetchMessages(plugin:CloudinaryUploader) : Promise<void>{
+  // After the upload action completes then
+  // retrieve data and display messages based on results.
   uploadVault(plugin).then((data)=>{
     if(data[0].length > 0 && data[1].length > 0){
       new Notice("Cloudinary vault asset backup: There was some success in uploading vault files, as well as some errors.  Open Developer Tools for error information in Console",0);
