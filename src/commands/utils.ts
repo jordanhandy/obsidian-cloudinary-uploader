@@ -54,12 +54,14 @@ export function uploadVault(plugin: CloudinaryUploader): void {
         folder: plugin.settings.preserveBackupFilePath ? path.join(plugin.settings.backupFolder, path.dirname(file.path)) : plugin.settings.backupFolder,
         resourceType: 'auto'
       }).then(res=>{
-        successMessages.push('success')
+        successMessages.push('success'); // tag success
       },err=>{
-        failureMessages.push(err.message);
+        failureMessages.push(err.message); // tag failure
       });
     }
-  }if(successMessages.length > 0 && failureMessages.length > 0){
+  }
+  // Display messaging
+  if(successMessages.length > 0 && failureMessages.length > 0){
     new Notice("There was some success in uploading your vault media to Cloudinary.  Look for error notices to discover what needs to be fixed",0);
   }else if(successMessages.length > 0 && failureMessages.length < 1){
     new Notice("Vault complete backup was successful. No error messages to report",0);
