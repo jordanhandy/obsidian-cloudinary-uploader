@@ -85,7 +85,9 @@ export async function fetchMessages(plugin:CloudinaryUploader) : Promise<void>{
     }
   });
 }
-export function uploadCurrentNoteFiles(file: TFile, plugin: CloudinaryUploader): void {
+export async function uploadCurrentNoteFiles(file: TFile, plugin: CloudinaryUploader): Promise<string[][]> {
+  let successMessages = [];
+  let failureMessages = [];
   //! Read a cached version of the file, then:
   /*
   * Find a RegEx match for [[]] file refs
@@ -101,7 +103,7 @@ export function uploadCurrentNoteFiles(file: TFile, plugin: CloudinaryUploader):
       let filePath;
       const adapter = plugin.app.vault.adapter;
       if (adapter instanceof FileSystemAdapter) {
-        filePath = adapter.getFullPath(fileString)
+        filePath = adapter.getFullPath(fileString);
         cloudinary.uploader.unsigned_upload(filePath, plugin.settings.uploadPreset, {
           folder: setSubfolder(undefined, filePath, plugin),
           resource_type: 'auto'
@@ -115,14 +117,17 @@ export function uploadCurrentNoteFiles(file: TFile, plugin: CloudinaryUploader):
           plugin.app.vault.process(file, () => {
             return data;
           })
-          new Notice("Upload of note file was completed"); // Success
+          successMessages.push('success')
+          //new Notice("Upload of note file was completed"); // Success
         }, err => {
+          failureMessages.push('error uploading file: '+filePath+'  '+err.message);
           // Failure
-          new Notice("There was something wrong with your upload.  Please try again. " + file.name + '. ' + err.message, 0);
+          //new Notice("There was something wrong with your upload.  Please try again. " + file.name + '. ' + err.message, 0);
         })
       }
     }
   });
+  return failureMessages;
 }
 // Called to generate the output of the transformation parameters
 // that are set on uploads
