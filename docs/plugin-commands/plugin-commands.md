@@ -1,7 +1,7 @@
 ---
 label: Plugin Commands
 layout: default
-order: 1000
+order: 700
 author: Jordan Handy
 icon: gear
 ---

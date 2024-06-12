@@ -1,7 +1,7 @@
 ---
 label: Upload all note assets to Cloudinary
 layout: default
-order: 800
+order: 700
 author: Jordan Handy
 icon: cloud
 ---
