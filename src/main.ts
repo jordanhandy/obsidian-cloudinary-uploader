@@ -9,7 +9,7 @@ import {
 import axios from "axios"
 import objectPath from 'object-path'
 import { v2 as cloudinary } from 'cloudinary';
-import { uploadNoteModal, uploadCurrentNoteFiles, setSubfolder, generateResourceUrl, generateTransformParams, fetchMessages } from "./commands/utils";
+import { uploadNoteModal, uploadCurrentNoteFiles, setSubfolder, generateResourceUrl, generateTransformParams, fetchMessages, uploadAllNotes } from "./commands/utils";
 
 
 // Settings tab import
@@ -36,14 +36,15 @@ export default class CloudinaryUploader extends Plugin {
       id: "upload-all-note-files-cloudinary",
       name: "Upload all note files to Cloudinary",
       callback: () => {
-        this.uploadAllNotes().then((returns) => {
+        if(this.settings.ignoreWarnings){
+        uploadAllNotes(this).then((returns) => {
           let errorFlag = false;
           if (returns.length > 0) {
             for (let msgs of returns) {
               if (msgs.length > 0) {
                 errorFlag = true
                 new Notice("There were errors completing your operation.  Please look at the developer console for further information", 0);
-                for (let msg of msg) {
+                for (let msg of msgs) {
                   console.warn(msg);
                 }
               }
@@ -55,6 +56,7 @@ export default class CloudinaryUploader extends Plugin {
         });
 
       }
+    }
     });
     this.addCommand({
       id: "upload-all-media-assets-cloudinary",
@@ -69,21 +71,7 @@ export default class CloudinaryUploader extends Plugin {
       }
     });
   }
-  private async uploadAllNotes(): Promise<string[]> {
-    let returnData = []
-    const files = this.app.vault.getMarkdownFiles()
-    if (this.settings.ignoreWarnings) {
-      for (let file of files) {
-        await uploadCurrentNoteFiles(file, this).then((res) => {
-          returnData.push(res);
-        });
-      }
-      return returnData;
 
-    } else {
-      uploadNoteModal(undefined, 'note', this);
-    }
-  }
   private clearHandlers(): void {
     this.app.workspace.off('editor-paste', this.pasteHandler);
     this.app.workspace.off('editor-drop', this.dropHandler);
