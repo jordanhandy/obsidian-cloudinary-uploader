@@ -19,7 +19,8 @@ export function uploadNoteModal(file?: TFile, type: string, plugin: CloudinaryUp
       } else {
         // If no file passed, but assets were to be uploaded
         if (type == 'asset') {
-          uploadVault(plugin); // Upload vault function
+          fetchMessages(plugin);
+          //uploadVault(plugin); // Upload vault function
           return;
         } else if (type == 'note') {  //! If no file passed, but 'notes' to be uploaded, this means all notes are requested.
           const files = plugin.app.vault.getMarkdownFiles()
@@ -36,41 +37,48 @@ export function uploadNoteModal(file?: TFile, type: string, plugin: CloudinaryUp
   }).open();
 }
 
-export function uploadVault(plugin: CloudinaryUploader): void {
+export async function uploadVault(plugin: CloudinaryUploader): Promise<string[][]> {
+  let successMessages = [];
+  let failureMessages = [];
   //* Get all files in vault that are not
   //* MD files, so they may be uploaded
   const files = plugin.app.vault.getFiles()
-  let successMessages = [];
-  let failureMessages = [];
+  new Notice("Upload of vault files started.  Depending on your vault size, this could take a long while.  Watch for error or success notices",0);
   for (let file of files) {
     if (file.extension != 'md') {
       let filePath;
       const adapter = plugin.app.vault.adapter;
       if (adapter instanceof FileSystemAdapter) {
         filePath = adapter.getFullPath(file.path);
-        console.log(filePath);
+        //console.log(filePath);
       }
-      cloudinary.uploader.unsigned_upload(filePath, plugin.settings.uploadPreset, {
+      await cloudinary.uploader.unsigned_upload(filePath, plugin.settings.uploadPreset, {
         folder: plugin.settings.preserveBackupFilePath ? path.join(plugin.settings.backupFolder, path.dirname(file.path)) : plugin.settings.backupFolder,
-        resourceType: 'auto'
+        resource_type: 'auto'
       }).then(res=>{
-        successMessages.push('success'); // tag success
+        successMessages.push('success')
+        //new Notice("Vault upload completed",0);
       },err=>{
-        failureMessages.push(err.message); // tag failure
+        failureMessages.push(err.message);
+       // new Notice("There was an error somewhere uploading your files  "+err.message);
       });
     }
   }
-  // Display messaging
-  if(successMessages.length > 0 && failureMessages.length > 0){
-    new Notice("There was some success in uploading your vault media to Cloudinary.  Look for error notices to discover what needs to be fixed",0);
-  }else if(successMessages.length > 0 && failureMessages.length < 1){
-    new Notice("Vault complete backup was successful. No error messages to report",0);
-  }if(failureMessages.length > 0){
-    new Notice("There was some failure in uploading some files.  An array of all failure messages has been printed to console as well as this Notice in the case the notice is too difficult to read  "+failureMessages,0);
-    for(let msg of failureMessages){
-      console.warn("Vault upload failure: "+msg);
+  return [successMessages,failureMessages];
+}
+async function fetchMessages(plugin:CloudinaryUploader){
+  uploadVault(plugin).then((data)=>{
+    if(data[0].length > 0 && data[1].length > 0){
+      new Notice("Cloudinary vault asset backup: There was some success in uploading vault files, as well as some errors.  Open Developer Tools for error information in Console",0);
+      for(let msg of data[1]){
+        console.warn(msg);
+      }
+    }else if(data[0].length >0){
+      new Notice("Cloudinary vault asset backup: This was successfully completed.  No errors to report",0);
+    }else if(data[1].length > 0){
+      new Notice("Cloudinary vault asset backup: This operation failed. Please try again",0);
     }
-  }
+  });
 }
 export function uploadCurrentNoteFiles(file: TFile, plugin: CloudinaryUploader): void {
   //! Read a cached version of the file, then:
