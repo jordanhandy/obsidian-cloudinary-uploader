@@ -26,6 +26,9 @@ export interface CloudinarySettings {
         audioSubfolder: string;
         videoSubfolder: string;
         rawSubfolder: string;
+        preserveBackupFilePath: boolean;
+        backupFolder: string;
+        ignoreWarnings: boolean;
     }
 export const DEFAULT_SETTINGS: CloudinarySettings = {
     cloudName: "",
@@ -42,7 +45,10 @@ export const DEFAULT_SETTINGS: CloudinarySettings = {
     imageSubfolder: "",
     audioSubfolder: "",
     videoSubfolder: "",
-    rawSubfolder: ""
+    rawSubfolder: "",
+    preserveBackupFilePath: false,
+    backupFolder: "",
+    ignoreWarnings: false
 };
 export default class CloudinaryUploaderSettingTab extends PluginSettingTab {
   
@@ -328,6 +334,69 @@ export default class CloudinaryUploaderSettingTab extends PluginSettingTab {
                     .onChange(async (value) => {
                         this.plugin.settings.rawSubfolder = value;
                         await this.plugin.saveSettings();
+                    })
+            });
+            containerEl.createEl("h5", { text: "File names, file conflicts, overwrite behaviour" });
+            link = document.createElement("a"); 
+            link.text="plugin documentation ";
+            link.href="https://jordanhandy.github.io/obsidian-cloudinary-uploader/cloudinary-duplication/";
+            textFragment = document.createDocumentFragment();
+            textFragment.append("Assuming all defaults in your Cloudinary Upload Preset settings, all file backups will receive a unique public ID (file name) within the Cloudinary console."+
+            "  This may make it hard to identify.  Additionally, file uploads will always be overwritten.  You can use a combination of settings for unique file naming as found in ");
+            textFragment.append(link);
+            containerEl.createEl("p", { text: textFragment });
+
+
+            containerEl.createEl("h4", { text: "Warnings" });
+            new Setting(containerEl)
+            .setName("Hide command palette mass upload warning")
+            .setDesc("Hides the warning modal and assumes that all mass actions are approved")
+            .addToggle((toggle) => {
+                toggle
+                    .setValue(this.plugin.settings.ignoreWarnings)
+                    .onChange(async (value) => {
+                        try {
+                            this.plugin.settings.ignoreWarnings = value;
+                            await this.plugin.saveSettings();
+                        }
+                        catch (e) {
+                            console.log(e)
+                        }
+                    })
+            });
+            containerEl.createEl("h3", { text: "EXPERIMENTAL FEATURES" });
+            containerEl.createEl("h4", { text: "Local File Backup" });
+            textFragment = document.createDocumentFragment();
+            textFragment.append("If you run the command to create a backup of vault local assets, these settings apply");
+            containerEl.createEl("p", { text: textFragment });
+
+            new Setting(containerEl)
+            .setName("Backup folder")
+            .setDesc("Root folder where backups are stored.  If not specified and you run a backup, root is specified as the root of your Cloudinary media library")
+            .addText((text) => {
+                text
+                    .setPlaceholder("backups")
+                    .setValue(this.plugin.settings.backupFolder)
+                    .onChange(async (value) => {
+                        this.plugin.settings.backupFolder = value;
+                        await this.plugin.saveSettings();
+                    })
+            });
+
+            new Setting(containerEl)
+            .setName("Preserve File Paths")
+            .setDesc("Preserve vault file path relative to root backup folder.  If disabled, assets will be placed in 'root', whether the above backup folder or root of Cloudinary Media library")
+            .addToggle((toggle) => {
+                toggle
+                    .setValue(this.plugin.settings.preserveBackupFilePath)
+                    .onChange(async (value) => {
+                        try {
+                            this.plugin.settings.preserveBackupFilePath = value;
+                            await this.plugin.saveSettings();
+                        }
+                        catch (e) {
+                            console.log(e)
+                        }
                     })
             });
     }

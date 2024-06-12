@@ -8,6 +8,9 @@ import {
 // For API requests
 import axios from "axios"
 import objectPath from 'object-path'
+import { v2 as cloudinary } from 'cloudinary';
+import { uploadVault, uploadNoteModal, uploadCurrentNoteFiles, setSubfolder, generateResourceUrl,generateTransformParams,fetchMessages } from "./commands/utils";
+
 
 // Settings tab import
 import CloudinaryUploaderSettingTab from './settings-tab'
@@ -15,12 +18,55 @@ import { DEFAULT_SETTINGS, CloudinarySettings } from "./settings-tab";
 export default class CloudinaryUploader extends Plugin {
   settings: CloudinarySettings;
 
-  private clearHandlers() {
+  private setCommands(): void {
+    this.addCommand({
+      id: "upload-single-note-files-to-cloudinary",
+      name: "Upload files in current note to Cloudinary",
+      callback: () => {
+        let file = this.app.workspace.getActiveFile();
+        if (this.settings.ignoreWarnings) {
+          uploadCurrentNoteFiles(file,this);
+        } else {
+          uploadNoteModal(file, 'note',this);
+
+        }
+      }
+    });
+    this.addCommand({
+      id: "upload-all-note-files-cloudinary",
+      name: "Upload all note files to Cloudinary",
+      callback: () => {
+        const files = this.app.vault.getMarkdownFiles()
+        if (this.settings.ignoreWarnings) {
+          for (let file of files) {
+            uploadCurrentNoteFiles(file,this);
+          }
+
+        } else {
+          uploadNoteModal(undefined, 'note',this);
+        }
+
+      }
+    });
+    this.addCommand({
+      id: "upload-all-media-assets-cloudinary",
+      name: "Upload all vault media assets to Cloudinary",
+      callback: () => {
+        if (this.settings.ignoreWarnings) {
+          //async fetch messages after upload of vault assets
+          fetchMessages(this);
+        } else {
+          uploadNoteModal(undefined, 'asset',this);
+        }
+      }
+    });
+  }
+  private clearHandlers(): void {
     this.app.workspace.off('editor-paste', this.pasteHandler);
     this.app.workspace.off('editor-drop', this.dropHandler);
   }
 
-  private setupHandlers() {
+  private setupHandlers(): void {
     if (this.settings.clipboardUpload) {
       this.registerEvent(this.app.workspace.on('editor-paste', this.pasteHandler));
     } else {
@@ -32,11 +78,11 @@ export default class CloudinaryUploader extends Plugin {
       this.app.workspace.off('editor-drop', this.dropHandler);
     }
   }
-  private pasteHandler = async (event: ClipboardEvent, editor: Editor) => {
+  private pasteHandler = async (event: ClipboardEvent, editor: Editor): Promise<void> => {
     const { files } = event.clipboardData;
     await this.uploadFiles(files, event, editor); // to fix
   }
-  private dropHandler = async (event: DragEventInit, editor: Editor) => {
+  private dropHandler = async (event: DragEventInit, editor: Editor): Promise<void> => {
     const { files } = event.dataTransfer;
     await this.uploadFiles(files, event, editor); // to fix
   }
@@ -67,7 +113,7 @@ export default class CloudinaryUploader extends Plugin {
             const formData = new FormData();
             formData.append('file', file);
             formData.append('upload_preset', this.settings.uploadPreset);
-            formData.append('folder', this.setSubfolder(file));
+            formData.append('folder', this.settings.folder != '' ? setSubfolder(file, undefined,this) : '');
 
             // Make API call
             axios({
@@ -77,30 +123,11 @@ export default class CloudinaryUploader extends Plugin {
             }).then(res => {
               // Get response public URL of uploaded image
               console.log(res);
-              let url = objectPath.get(res.data, 'secure_url')
-              let replaceMarkdownText = "";
-
+              let url = objectPath.get(res.data, 'secure_url');
+              let resType = objectPath.get(res.data, 'resource_type');
               // Split URL to allow for appending transformations
-              if (this.settings.transformParams) {
-                const splitURL = url.split("/upload/", 2);
-                url = splitURL[0] += "/upload/" + this.settings.transformParams + "/" + splitURL[1];
-                replaceMarkdownText = `![](${url})`;
-              }
-              if (this.settings.f_auto) {
-                const splitURL = url.split("/upload/", 2);
-                url = splitURL[0] += "/upload/f_auto/" + splitURL[1];
-                replaceMarkdownText = `![](${url})`;
-
-                // leave standard of no transformations added
-              } else {
-                replaceMarkdownText = `![](${url})`;
-              }
-              // Change URL format based on content type
-              if (files[0].type.startsWith("audio")) {
-                replaceMarkdownText = `<audio src="${url}" controls></audio>\n`
-              } else if (files[0].type.startsWith("video")) {
-                replaceMarkdownText = `<video src="${url}" controls></video>\n`
-              }
+              url = generateTransformParams(url,this);
+              let replaceMarkdownText = generateResourceUrl(file.type, url);
               // Show MD syntax using uploaded image URL, in Obsidian Editor
               this.replaceText(editor, pastePlaceText, replaceMarkdownText)
             }, err => {
@@ -117,18 +144,7 @@ export default class CloudinaryUploader extends Plugin {
     }
   }
 
-  // Set subfolder for upload
-  private setSubfolder(file: File) {
-    if (file.type.startsWith("image")) {
-      return `${this.settings.folder}/${this.settings.imageSubfolder}`;
-    } else if (file.type.startsWith("audio")) {
-      return `${this.settings.folder}/${this.settings.audioSubfolder}`;
-    } else if (file.type.startsWith("video")) {
-      return `${this.settings.folder}/${this.settings.videoSubfolder}`;
-    } else {
-      return `${this.settings.folder}/${this.settings.rawSubfolder}`;
-    }
-  }
+
   // Function to replace text
   private replaceText(editor: Editor, target: string, replacement: string): void {
     target = target.trim();
@@ -146,15 +162,21 @@ export default class CloudinaryUploader extends Plugin {
       }
     }
   }
-
+  
   // Plugin load steps
   async onload(): Promise<void> {
     console.log("loading Cloudinary Uploader");
     await this.loadSettings();
     this.clearHandlers();
     this.setupHandlers();
-    this.addSettingTab(new CloudinaryUploaderSettingTab(this.app, this));
-  }
+    this.addSettingTab(new CloudinaryUploaderSettingTab(this.app,this));
+
+    // Set cloudinary cloud name config for node module
+    cloudinary.config({
+      cloud_name: this.settings.cloudName
+    });
+    this.setCommands();
+    }
 
   // Plugin shutdown steps
   onunload(): void {
