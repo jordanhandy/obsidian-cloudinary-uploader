@@ -9,7 +9,7 @@ import {
 import axios from "axios"
 import objectPath from 'object-path'
 import { v2 as cloudinary } from 'cloudinary';
-import { uploadVault, uploadNoteModal, uploadCurrentNoteFiles, setSubfolder, generateResourceUrl,generateTransformParams,fetchMessages } from "./commands/utils";
+import { uploadNoteModal, uploadCurrentNoteFiles, setSubfolder, generateResourceUrl,generateTransformParams,fetchMessages } from "./commands/utils";
 
 
 // Settings tab import
