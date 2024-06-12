@@ -125,7 +125,7 @@ export default class CloudinaryUploader extends Plugin {
               let url = objectPath.get(res.data, 'secure_url');
               let resType = objectPath.get(res.data, 'resource_type');
               // Split URL to allow for appending transformations
-              url = generateTransformParams(url);
+              url = generateTransformParams(url,this);
               let replaceMarkdownText = generateResourceUrl(file.type, url);
               // Show MD syntax using uploaded image URL, in Obsidian Editor
               this.replaceText(editor, pastePlaceText, replaceMarkdownText)
@@ -169,6 +169,8 @@ export default class CloudinaryUploader extends Plugin {
     this.clearHandlers();
     this.setupHandlers();
     this.addSettingTab(new CloudinaryUploaderSettingTab(this.app,this));
+
+    // Set cloudinary cloud name config for node module
     cloudinary.config({
       cloud_name: this.settings.cloudName
     });

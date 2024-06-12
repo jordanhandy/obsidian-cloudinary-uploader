@@ -51,6 +51,10 @@ export function uploadVault(plugin: CloudinaryUploader): void {
       cloudinary.uploader.unsigned_upload(filePath, plugin.settings.uploadPreset, {
         folder: plugin.settings.preserveBackupFilePath ? path.join(plugin.settings.backupFolder, path.dirname(file.path)) : plugin.settings.backupFolder,
         resourceType: 'auto'
+      }).then(res=>{
+        new Notice("Vault upload completed",0);
+      },err=>{
+        new Notice("There was an error somewhere uploading your files  "+err.message);
       });
     }
   }
