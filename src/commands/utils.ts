@@ -40,6 +40,8 @@ export function uploadVault(plugin: CloudinaryUploader): void {
   //* Get all files in vault that are not
   //* MD files, so they may be uploaded
   const files = plugin.app.vault.getFiles()
+  let successMessages = [];
+  let failureMessages = [];
   for (let file of files) {
     if (file.extension != 'md') {
       let filePath;
@@ -52,10 +54,19 @@ export function uploadVault(plugin: CloudinaryUploader): void {
         folder: plugin.settings.preserveBackupFilePath ? path.join(plugin.settings.backupFolder, path.dirname(file.path)) : plugin.settings.backupFolder,
         resourceType: 'auto'
       }).then(res=>{
-        new Notice("Vault upload completed",0);
+        successMessages.push('success')
       },err=>{
-        new Notice("There was an error somewhere uploading your files  "+err.message);
+        failureMessages.push(err.message);
       });
+    }
+  }if(successMessages.length > 0 && failureMessages.length > 0){
+    new Notice("There was some success in uploading your vault media to Cloudinary.  Look for error notices to discover what needs to be fixed",0);
+  }else if(successMessages.length > 0 && failureMessages.length < 1){
+    new Notice("Vault complete backup was successful. No error messages to report",0);
+  }if(failureMessages.length > 0){
+    new Notice("There was some failure in uploading some files.  An array of all failure messages has been printed to console as well as this Notice in the case the notice is too difficult to read  "+failureMessages,0);
+    for(let msg of failureMessages){
+      console.warn("Vault upload failure: "+msg);
     }
   }
 }
