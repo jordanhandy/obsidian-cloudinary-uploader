@@ -3,15 +3,13 @@ import {
   Notice,
   Plugin,
   Editor,
-  FileSystemAdapter,
-  TFile
 } from "obsidian";
 
 // For API requests
 import axios from "axios"
 import objectPath from 'object-path'
-import path from 'path'
 import { v2 as cloudinary } from 'cloudinary';
+import { uploadVault, uploadNoteModal, uploadCurrentNoteFiles, setSubfolder, generateResourceUrl,generateTransformParams } from "./commands/utils";
 
 
 // Settings tab import
@@ -29,9 +27,9 @@ export default class CloudinaryUploader extends Plugin {
       callback: () => {
         let file = this.app.workspace.getActiveFile();
         if (this.settings.ignoreWarnings) {
-          this.uploadCurrentNoteFiles(file);
+          uploadCurrentNoteFiles(file,this);
         } else {
-          this.uploadNoteModal(file, 'note');
+          uploadNoteModal(file, 'note',this);
 
         }
       }
@@ -43,11 +41,11 @@ export default class CloudinaryUploader extends Plugin {
         const files = this.app.vault.getMarkdownFiles()
         if (this.settings.ignoreWarnings) {
           for (let file of files) {
-            this.uploadCurrentNoteFiles(file);
+            uploadCurrentNoteFiles(file,this);
           }
 
         } else {
-          this.uploadNoteModal(undefined, 'note');
+          uploadNoteModal(undefined, 'note',this);
         }
 
       }
@@ -57,84 +55,9 @@ export default class CloudinaryUploader extends Plugin {
       name: "Upload all vault media assets to Cloudinary",
       callback: () => {
         if (this.settings.ignoreWarnings) {
-          this.uploadVault();
+          uploadVault(this);
         } else {
-          this.uploadNoteModal(undefined, 'asset');
-        }
-      }
-    });
-  }
-
-  private uploadNoteModal(file?: TFile, type?: string): void {
-    new NoteWarningModal(this.app, type, (result): void => {
-      if (result == 'true') {
-        if (file) {
-          this.uploadCurrentNoteFiles(file);
-          return;
-        } else {
-          if (type == 'asset') {
-            this.uploadVault();
-            return;
-          } else if (type == 'note') {
-            const files = this.app.vault.getMarkdownFiles()
-            for (let file of files) {
-              this.uploadCurrentNoteFiles(file);
-            }
-
-          }
-        }
-      } else {
-        return;
-      }
-
-    }).open();
-  }
-  private uploadVault(): void {
-    const files = this.app.vault.getFiles()
-    for (let file of files) {
-      if (file.extension != 'md') {
-        let filePath;
-        const adapter = this.app.vault.adapter;
-        if (adapter instanceof FileSystemAdapter) {
-          filePath = adapter.getFullPath(file.path);
-          console.log(filePath);
-        }
-        cloudinary.uploader.unsigned_upload(filePath, this.settings.uploadPreset, {
-          folder: this.settings.preserveBackupFilePath ? path.join(this.settings.backupFolder, path.dirname(file.path)) : this.settings.backupFolder,
-          resourceType: 'auto'
-        });
-      }
-    }
-  }
-  private uploadCurrentNoteFiles(file: TFile): void {
-    let data = this.app.vault.cachedRead(file).then((result) => {
-      data = result;
-    }).then(() => {
-      const found = data.match(/\!\[\[(?!https?:\/\/).*?\]\]/g);
-      if (found && found.length > 0) for (let find of found) {
-        let fileString = find.substring(3, find.length - 2);
-        let filePath;
-        const adapter = this.app.vault.adapter;
-        if (adapter instanceof FileSystemAdapter) {
-          filePath = adapter.getFullPath(fileString)
-          cloudinary.uploader.unsigned_upload(filePath, this.settings.uploadPreset, {
-            folder: this.setSubfolder(undefined, filePath),
-            resource_type: 'auto'
-          }).then(res => {
-            console.log(res);
-            let url = objectPath.get(res, 'secure_url');
-            let resType = objectPath.get(res, 'resource_type');
-            url = this.generateTransformParams(url);
-            let replaceMarkdownText = this.generateResourceUrl(resType, url);
-            data = data.replace(find, replaceMarkdownText);
-            this.app.vault.process(file, () => {
-              return data;
-            })
-            new Notice("Upload of note files was completed");
-          }, err => {
-            console.log(JSON.stringify(err))
-            new Notice("There was something wrong with your upload.  Please try again. " + file.name + '. ' + err.message, 0);
-          })
+          uploadNoteModal(undefined, 'asset',this);
         }
       }
     });
@@ -191,7 +114,7 @@ export default class CloudinaryUploader extends Plugin {
             const formData = new FormData();
             formData.append('file', file);
             formData.append('upload_preset', this.settings.uploadPreset);
-            formData.append('folder', this.settings.folder != '' ? this.setSubfolder(file, undefined) : '');
+            formData.append('folder', this.settings.folder != '' ? setSubfolder(file, undefined,this) : '');
 
             // Make API call
             axios({
@@ -204,8 +127,8 @@ export default class CloudinaryUploader extends Plugin {
               let url = objectPath.get(res.data, 'secure_url');
               let resType = objectPath.get(res.data, 'resource_type');
               // Split URL to allow for appending transformations
-              url = this.generateTransformParams(url);
-              let replaceMarkdownText = this.generateResourceUrl(file.type, url);
+              url = generateTransformParams(url);
+              let replaceMarkdownText = generateResourceUrl(file.type, url);
               // Show MD syntax using uploaded image URL, in Obsidian Editor
               this.replaceText(editor, pastePlaceText, replaceMarkdownText)
             }, err => {
@@ -222,43 +145,7 @@ export default class CloudinaryUploader extends Plugin {
     }
   }
 
-  // Set subfolder for upload
-  private setSubfolder(file?: File, resourceUrl?: string): string {
-    if (file) {
-      if (file.type && file.type.startsWith("image")) {
-        return `${this.settings.folder}/${this.settings.imageSubfolder}`;
-      } else if (file.type.startsWith("audio")) {
-        return `${this.settings.folder}/${this.settings.audioSubfolder}`;
-      } else if (file.type.startsWith("video")) {
-        return `${this.settings.folder}/${this.settings.videoSubfolder}`;
-      } else {
-        return `${this.settings.folder}/${this.settings.rawSubfolder}`;
-      }
-    } else if (resourceUrl) {
-      if (this.isType(resourceUrl, imageFormats)) {
-        return `${this.settings.folder}/${this.settings.imageSubfolder}`;
-      } else if (this.isType(resourceUrl, audioFormats)) {
-        return `${this.settings.folder}/${this.settings.audioSubfolder}`;
-      } else if (this.isType(resourceUrl, videoFormats)) {
-        return `${this.settings.folder}/${this.settings.videoSubfolder}`;
-      } else {
-        return `${this.settings.folder}/${this.settings.rawSubfolder}`;
-      }
-    }
 
-  }
-  private generateTransformParams(url: string): string {
-    if (this.settings.transformParams) {
-      const splitURL = url.split("/upload/", 2);
-      url = splitURL[0] += "/upload/" + this.settings.transformParams + "/" + splitURL[1];
-    }
-    if (this.settings.f_auto) {
-      const splitURL = url.split("/upload/", 2);
-      url = splitURL[0] += "/upload/f_auto/" + splitURL[1];
-      // leave standard of no transformations added
-    }
-    return url;
-  }
   // Function to replace text
   private replaceText(editor: Editor, target: string, replacement: string): void {
     target = target.trim();
@@ -276,39 +163,19 @@ export default class CloudinaryUploader extends Plugin {
       }
     }
   }
-  // Required as Cloudinary doesn't have an 'audio' resource type.
-  // As we only know the file type after it's been uploaded (we don't know MIME type),
-  // we check if audio was uploaded based on the most-commonly used audio formats
-  private isType(url: string, formats: string[]): boolean {
-    let foundTypeMatch = false;
-    for (let format of formats) {
-      if (url.endsWith(format)) {
-        foundTypeMatch = true;
-      }
-    }
-    return foundTypeMatch;
-  }
-  private generateResourceUrl(type: string, url: string): string {
-    if (type == 'audio' || this.isType(url, audioFormats)) {
-      return `<audio src="${url}" controls></audio>\n`;
-    } else if (type == 'video' || this.isType(url, videoFormats)) {
-      return `<video src="${url}" controls></video>\n`;
-    } else {
-      return `![](${url})`;
-    }
-  }
+  
   // Plugin load steps
   async onload(): Promise<void> {
     console.log("loading Cloudinary Uploader");
     await this.loadSettings();
     this.clearHandlers();
     this.setupHandlers();
-    this.addSettingTab(new CloudinaryUploaderSettingTab(this.app, this));
+    this.addSettingTab(new CloudinaryUploaderSettingTab(this.app,this));
     cloudinary.config({
       cloud_name: this.settings.cloudName
     });
-    this.setCommands()
-  }
+    this.setCommands();
+    }
 
   // Plugin shutdown steps
   onunload(): void {
