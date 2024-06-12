@@ -37,7 +37,8 @@ export function uploadNoteModal(file?: TFile, type: string, plugin: CloudinaryUp
 }
 
 export function uploadVault(plugin: CloudinaryUploader): void {
-
+  //* Get all files in vault that are not
+  //* MD files, so they may be uploaded
   const files = plugin.app.vault.getFiles()
   for (let file of files) {
     if (file.extension != 'md') {
@@ -55,6 +56,14 @@ export function uploadVault(plugin: CloudinaryUploader): void {
   }
 }
 export function uploadCurrentNoteFiles(file: TFile, plugin: CloudinaryUploader): void {
+  //! Read a cached version of the file, then:
+  /*
+  * Find a RegEx match for [[]] file refs
+  * Get file name and find full path of file
+  * Pass full path to Cloudinary for upload
+  * Based on answer returned, determine subfolder, then:
+  * Replace current strings with Cloudinary URLs
+  */
   let data = plugin.app.vault.cachedRead(file).then((result) => {
     data = result;
   }).then(() => {
@@ -78,15 +87,17 @@ export function uploadCurrentNoteFiles(file: TFile, plugin: CloudinaryUploader):
           plugin.app.vault.process(file, () => {
             return data;
           })
-          new Notice("Upload of note files was completed");
+          new Notice("Upload of note files was completed"); // Success
         }, err => {
-          console.log(JSON.stringify(err))
+          // Failure
           new Notice("There was something wrong with your upload.  Please try again. " + file.name + '. ' + err.message, 0);
         })
       }
     }
   });
 }
+// Called to generate the output of the transformation parameters
+// that are set on uploads
 export function generateTransformParams(url: string, plugin: CloudinaryUploader): string {
   if (plugin.settings.transformParams) {
     const splitURL = url.split("/upload/", 2);
@@ -99,6 +110,8 @@ export function generateTransformParams(url: string, plugin: CloudinaryUploader)
   }
   return url;
 }
+// Once upload completes, generate the resulting getMarkdown
+// that will be written to file
 export function generateResourceUrl(type: string, url: string): string {
   if (type == 'audio' || isType(url, audioFormats)) {
     return `<audio src="${url}" controls></audio>\n`;
@@ -120,26 +133,28 @@ export function isType(url: string, formats: string[]): boolean {
   }
   return foundTypeMatch;
 }
-export function setSubfolder(file: File, resourceUrl: string, settings: CloudinaryUploader): string {
+// Determine the subfolder to place the uploaded
+// file in, based on file type uploaded
+export function setSubfolder(file: File, resourceUrl: string, plugin: CloudinaryUploader): string {
   if (file) {
     if (file.type && file.type.startsWith("image")) {
-      return `${settings.folder}/${settings.imageSubfolder}`;
+      return `${plugin.settings.folder}/${plugin.settings.imageSubfolder}`;
     } else if (file.type.startsWith("audio")) {
-      return `${settings.folder}/${settings.audioSubfolder}`;
+      return `${plugin.settings.folder}/${plugin.settings.audioSubfolder}`;
     } else if (file.type.startsWith("video")) {
-      return `${settings.folder}/${settings.videoSubfolder}`;
+      return `${plugin.settings.folder}/${plugin.settings.videoSubfolder}`;
     } else {
-      return `${settings.folder}/${settings.rawSubfolder}`;
+      return `${plugin.settings.folder}/${plugin.settings.rawSubfolder}`;
     }
   } else if (resourceUrl) {
     if (isType(resourceUrl, imageFormats)) {
-      return `${settings.folder}/${settings.imageSubfolder}`;
+      return `${plugin.settings.folder}/${plugin.settings.imageSubfolder}`;
     } else if (isType(resourceUrl, audioFormats)) {
-      return `${settings.folder}/${settings.audioSubfolder}`;
+      return `${plugin.settings.folder}/${plugin.settings.audioSubfolder}`;
     } else if (isType(resourceUrl, videoFormats)) {
-      return `${settings.folder}/${settings.videoSubfolder}`;
+      return `${plugin.settings.folder}/${plugin.settings.videoSubfolder}`;
     } else {
-      return `${settings.folder}/${settings.rawSubfolder}`;
+      return `${plugin.settings.folder}/${plugin.settings.rawSubfolder}`;
     }
   }
 
