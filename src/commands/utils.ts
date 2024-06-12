@@ -94,7 +94,7 @@ export function uploadCurrentNoteFiles(file: TFile, plugin: CloudinaryUploader):
   * Based on answer returned, determine subfolder, then:
   * Replace current strings with Cloudinary URLs
   */
-  let data = plugin.app.vault.cachedRead(file).then(() => {
+  let data = plugin.app.vault.cachedRead(file).then((data) => {
     const found = data.match(/\!\[\[(?!https?:\/\/).*?\]\]/g);
     if (found && found.length > 0) for (let find of found) {
       let fileString = find.substring(3, find.length - 2);
