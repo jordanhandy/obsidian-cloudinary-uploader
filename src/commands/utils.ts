@@ -22,12 +22,26 @@ export function uploadNoteModal(file?: TFile, type: string, plugin: CloudinaryUp
           fetchMessages(plugin);
           //uploadVault(plugin); // Upload vault function
           return;
-        } else if (type == 'note') {  //! If no file passed, but 'notes' to be uploaded, this means all notes are requested.
-          const files = plugin.app.vault.getMarkdownFiles()
-          for (let file of files) {
-            uploadCurrentNoteFiles(file, plugin);
-          }
-
+        } else if (type == 'note') {  //! If no file passed, but 'notes' to be uploaded, this means all notes are requested.     
+          uploadAllNotes(plugin).then((returns) => {
+            let errorFlag = false;
+            if (returns.length > 0) {
+              for (let msgs of returns) {
+                if (msgs.length > 0) {
+  
+                  // If errors
+                  errorFlag = true
+                  new Notice("There were errors completing your operation.  Please look at the developer console for further information", 0);
+                  for (let msg of msgs) {
+                    console.warn(msg);
+                  }
+                }
+  
+              }
+            } if (!errorFlag) {
+              new Notice("The operation is complete.  No errors to report", 0);
+            }
+          });
         }
       }
     } else {
@@ -36,6 +50,18 @@ export function uploadNoteModal(file?: TFile, type: string, plugin: CloudinaryUp
 
   }).open();
 }
+// This function used to upload mass note files
+export async function uploadAllNotes(plugin:CloudinaryUploader): Promise<string[]> {
+  let returnData = []
+  const files = plugin.app.vault.getMarkdownFiles()
+    for (let file of files) {
+      await uploadCurrentNoteFiles(file, plugin).then((res) => {
+        returnData.push(res);
+      });
+    }
+    return returnData;
+}
+
 
 export async function uploadVault(plugin: CloudinaryUploader): Promise<string[][]> {
   let successMessages = [];
@@ -85,7 +111,9 @@ export async function fetchMessages(plugin:CloudinaryUploader) : Promise<void>{
     }
   });
 }
-export function uploadCurrentNoteFiles(file: TFile, plugin: CloudinaryUploader): void {
+export async function uploadCurrentNoteFiles(file: TFile, plugin: CloudinaryUploader): Promise<string[][]> {
+  let successMessages = [];
+  let failureMessages = [];
   //! Read a cached version of the file, then:
   /*
   * Find a RegEx match for [[]] file refs
@@ -101,7 +129,7 @@ export function uploadCurrentNoteFiles(file: TFile, plugin: CloudinaryUploader):
       let filePath;
       const adapter = plugin.app.vault.adapter;
       if (adapter instanceof FileSystemAdapter) {
-        filePath = adapter.getFullPath(fileString)
+        filePath = adapter.getFullPath(fileString);
         cloudinary.uploader.unsigned_upload(filePath, plugin.settings.uploadPreset, {
           folder: setSubfolder(undefined, filePath, plugin),
           resource_type: 'auto'
@@ -115,14 +143,17 @@ export function uploadCurrentNoteFiles(file: TFile, plugin: CloudinaryUploader):
           plugin.app.vault.process(file, () => {
             return data;
           })
-          new Notice("Upload of note file was completed"); // Success
+          successMessages.push('success')
+          //new Notice("Upload of note file was completed"); // Success
         }, err => {
+          failureMessages.push('error uploading file: '+filePath+'  '+err.message);
           // Failure
-          new Notice("There was something wrong with your upload.  Please try again. " + file.name + '. ' + err.message, 0);
+          //new Notice("There was something wrong with your upload.  Please try again. " + file.name + '. ' + err.message, 0);
         })
       }
     }
   });
+  return failureMessages;
 }
 // Called to generate the output of the transformation parameters
 // that are set on uploads
@@ -164,26 +195,37 @@ export function isType(url: string, formats: string[]): boolean {
 // Determine the subfolder to place the uploaded
 // file in, based on file type uploaded
 export function setSubfolder(file: File, resourceUrl: string, plugin: CloudinaryUploader): string {
+  let result="";
   if (file) {
-    if (file.type && file.type.startsWith("image")) {
-      return `${plugin.settings.folder}/${plugin.settings.imageSubfolder}`;
-    } else if (file.type.startsWith("audio")) {
-      return `${plugin.settings.folder}/${plugin.settings.audioSubfolder}`;
-    } else if (file.type.startsWith("video")) {
-      return `${plugin.settings.folder}/${plugin.settings.videoSubfolder}`;
-    } else {
-      return `${plugin.settings.folder}/${plugin.settings.rawSubfolder}`;
+    if (file.type && file.type.startsWith("image") && plugin.settings.imageSubfolder) {
+      result = `${plugin.settings.imageSubfolder}`;
+    } else if (file.type.startsWith("audio") && plugin.settings.audioSubfolder) {
+      result = `${plugin.settings.audioSubfolder}`;
+    } else if (file.type.startsWith("video") && plugin.settings.videoSubfolder ) {
+      result = `${plugin.settings.videoSubfolder}`;
+    } else if(plugin.settings.rawSubfolder) {
+      result = `${plugin.settings.rawSubfolder}`;
     }
   } else if (resourceUrl) {
-    if (isType(resourceUrl, imageFormats)) {
-      return `${plugin.settings.folder}/${plugin.settings.imageSubfolder}`;
-    } else if (isType(resourceUrl, audioFormats)) {
-      return `${plugin.settings.folder}/${plugin.settings.audioSubfolder}`;
-    } else if (isType(resourceUrl, videoFormats)) {
-      return `${plugin.settings.folder}/${plugin.settings.videoSubfolder}`;
-    } else {
-      return `${plugin.settings.folder}/${plugin.settings.rawSubfolder}`;
+    if (isType(resourceUrl, imageFormats) && plugin.settings.imageSubfolder) {
+      result = `${plugin.settings.folder}/${plugin.settings.imageSubfolder}`;
+    } else if (isType(resourceUrl, audioFormats) && plugin.settings.audioSubfolder) {
+      result = `${plugin.settings.folder}/${plugin.settings.audioSubfolder}`;
+    } else if (isType(resourceUrl, videoFormats) && plugin.settings.videoSubfolder) {
+      result = `${plugin.settings.folder}/${plugin.settings.videoSubfolder}`;
+    } else if(plugin.settings.rawSubfolder) {
+      result = `${plugin.settings.folder}/${plugin.settings.rawSubfolder}`;
     }
   }
+  if(plugin.settings.folder && result != ""){
+    result = `${plugin.settings.folder}/${result}`
+  }else if(!plugin.settings.folder && result != ""){
+    result = `${result}`
+  }else if(plugin.settings.folder){
+    result = `${plugin.settings.folder}`;
+  }else{
+    result ="";
+  }
+  return result;
 
 }

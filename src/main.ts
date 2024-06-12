@@ -9,7 +9,7 @@ import {
 import axios from "axios"
 import objectPath from 'object-path'
 import { v2 as cloudinary } from 'cloudinary';
-import { uploadVault, uploadNoteModal, uploadCurrentNoteFiles, setSubfolder, generateResourceUrl,generateTransformParams,fetchMessages } from "./commands/utils";
+import { uploadNoteModal, uploadCurrentNoteFiles, setSubfolder, generateResourceUrl, generateTransformParams, fetchMessages, uploadAllNotes } from "./commands/utils";
 
 
 // Settings tab import
@@ -25,28 +25,50 @@ export default class CloudinaryUploader extends Plugin {
       callback: () => {
         let file = this.app.workspace.getActiveFile();
         if (this.settings.ignoreWarnings) {
-          uploadCurrentNoteFiles(file,this);
+          uploadCurrentNoteFiles(file, this);
         } else {
-          uploadNoteModal(file, 'note',this);
+          uploadNoteModal(file, 'note', this);
 
         }
       }
     });
     this.addCommand({
+      //* If we're uploading all note files, we loop over the standard
+      //* note file upload function
       id: "upload-all-note-files-cloudinary",
       name: "Upload all note files to Cloudinary",
       callback: () => {
-        const files = this.app.vault.getMarkdownFiles()
-        if (this.settings.ignoreWarnings) {
-          for (let file of files) {
-            uploadCurrentNoteFiles(file,this);
+        if(this.settings.ignoreWarnings){
+          // If we were to do the standard loop,
+          // success / failure messages would be shown for each
+          // success / failure.  Has the potential to hang up the program
+          // if there are many assets uploaded.
+
+          // Upload Notes waits until all uploads done
+        uploadAllNotes(this).then((returns) => {
+          let errorFlag = false;
+          if (returns.length > 0) {
+            for (let msgs of returns) {
+              if (msgs.length > 0) {
+
+                // If errors
+                errorFlag = true
+                new Notice("There were errors completing your operation.  Please look at the developer console for further information", 0);
+                for (let msg of msgs) {
+                  console.warn(msg);
+                }
+              }
+
+            }
+          } if (!errorFlag) {
+            new Notice("The operation is complete.  No errors to report", 0);
           }
+        });
 
-        } else {
-          uploadNoteModal(undefined, 'note',this);
-        }
-
+      }else{
+        uploadNoteModal(undefined,'note',this);
       }
+    }
     });
     this.addCommand({
       id: "upload-all-media-assets-cloudinary",
@@ -56,11 +78,12 @@ export default class CloudinaryUploader extends Plugin {
           //async fetch messages after upload of vault assets
           fetchMessages(this);
         } else {
-          uploadNoteModal(undefined, 'asset',this);
+          uploadNoteModal(undefined, 'asset', this);
         }
       }
     });
   }
+
   private clearHandlers(): void {
     this.app.workspace.off('editor-paste', this.pasteHandler);
     this.app.workspace.off('editor-drop', this.dropHandler);
@@ -113,7 +136,7 @@ export default class CloudinaryUploader extends Plugin {
             const formData = new FormData();
             formData.append('file', file);
             formData.append('upload_preset', this.settings.uploadPreset);
-            formData.append('folder', this.settings.folder != '' ? setSubfolder(file, undefined,this) : '');
+            formData.append('folder', this.settings.folder != '' ? setSubfolder(file, undefined, this) : '');
 
             // Make API call
             axios({
@@ -126,7 +149,7 @@ export default class CloudinaryUploader extends Plugin {
               let url = objectPath.get(res.data, 'secure_url');
               let resType = objectPath.get(res.data, 'resource_type');
               // Split URL to allow for appending transformations
-              url = generateTransformParams(url,this);
+              url = generateTransformParams(url, this);
               let replaceMarkdownText = generateResourceUrl(file.type, url);
               // Show MD syntax using uploaded image URL, in Obsidian Editor
               this.replaceText(editor, pastePlaceText, replaceMarkdownText)
@@ -162,21 +185,21 @@ export default class CloudinaryUploader extends Plugin {
       }
     }
   }
-  
+
   // Plugin load steps
   async onload(): Promise<void> {
     console.log("loading Cloudinary Uploader");
     await this.loadSettings();
     this.clearHandlers();
     this.setupHandlers();
-    this.addSettingTab(new CloudinaryUploaderSettingTab(this.app,this));
+    this.addSettingTab(new CloudinaryUploaderSettingTab(this.app, this));
 
     // Set cloudinary cloud name config for node module
     cloudinary.config({
       cloud_name: this.settings.cloudName
     });
     this.setCommands();
-    }
+  }
 
   // Plugin shutdown steps
   onunload(): void {
