@@ -50,7 +50,6 @@ export async function uploadVault(plugin: CloudinaryUploader): Promise<string[][
       const adapter = plugin.app.vault.adapter;
       if (adapter instanceof FileSystemAdapter) {
         filePath = adapter.getFullPath(file.path);
-        //console.log(filePath);
       }
       await cloudinary.uploader.unsigned_upload(filePath, plugin.settings.uploadPreset, {
         folder: plugin.settings.preserveBackupFilePath ? path.join(plugin.settings.backupFolder, path.dirname(file.path)) : plugin.settings.backupFolder,
@@ -70,7 +69,7 @@ export async function uploadVault(plugin: CloudinaryUploader): Promise<string[][
 
 //* This function fetches messages from the mass upload job
 //* as this could take a while if the vault is larger
-async function fetchMessages(plugin:CloudinaryUploader) : Promise<void>{
+export async function fetchMessages(plugin:CloudinaryUploader) : Promise<void>{
   // After the upload action completes then
   // retrieve data and display messages based on results.
   uploadVault(plugin).then((data)=>{
@@ -95,9 +94,7 @@ export function uploadCurrentNoteFiles(file: TFile, plugin: CloudinaryUploader):
   * Based on answer returned, determine subfolder, then:
   * Replace current strings with Cloudinary URLs
   */
-  let data = plugin.app.vault.cachedRead(file).then((result) => {
-    data = result;
-  }).then(() => {
+  let data = plugin.app.vault.cachedRead(file).then(() => {
     const found = data.match(/\!\[\[(?!https?:\/\/).*?\]\]/g);
     if (found && found.length > 0) for (let find of found) {
       let fileString = find.substring(3, find.length - 2);
@@ -118,7 +115,7 @@ export function uploadCurrentNoteFiles(file: TFile, plugin: CloudinaryUploader):
           plugin.app.vault.process(file, () => {
             return data;
           })
-          new Notice("Upload of note files was completed"); // Success
+          new Notice("Upload of note file was completed"); // Success
         }, err => {
           // Failure
           new Notice("There was something wrong with your upload.  Please try again. " + file.name + '. ' + err.message, 0);

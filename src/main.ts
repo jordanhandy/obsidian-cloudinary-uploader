@@ -9,7 +9,7 @@ import {
 import axios from "axios"
 import objectPath from 'object-path'
 import { v2 as cloudinary } from 'cloudinary';
-import { uploadVault, uploadNoteModal, uploadCurrentNoteFiles, setSubfolder, generateResourceUrl,generateTransformParams } from "./commands/utils";
+import { uploadVault, uploadNoteModal, uploadCurrentNoteFiles, setSubfolder, generateResourceUrl,generateTransformParams,fetchMessages } from "./commands/utils";
 
 
 // Settings tab import
@@ -53,7 +53,8 @@ export default class CloudinaryUploader extends Plugin {
       name: "Upload all vault media assets to Cloudinary",
       callback: () => {
         if (this.settings.ignoreWarnings) {
-          uploadVault(this);
+          //async fetch messages after upload of vault assets
+          fetchMessages(this);
         } else {
           uploadNoteModal(undefined, 'asset',this);
         }
