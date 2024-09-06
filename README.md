@@ -60,3 +60,6 @@ If this were to happen, this can be fixed by simply modifying the URL following 
 Special thanks to:
 1. @Creling and [their repo here](https://github.com/Creling/obsidian-image-uploader).  As this was my first time creating an Obsidian plugin, their base really helped.  
 2. [Obsidian Unofficial Plugin Developer Docs](https://marcus.se.net/obsidian-plugin-docs/)
+
+## Other Plugins
+If you would like to use a plugin with more customization options that supports audio, video, and binary formats, check out my [imgBB Uploader for Obsidian](https://github.com/jordanhandy/obsidian-imgbb-uploader)
